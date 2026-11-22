@@ -1,5 +1,5 @@
 import type { ExecArgs } from "@medusajs/framework/types"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils"
 import { telegramCall } from "../lib/telegram"
 
 /**
@@ -16,7 +16,10 @@ export default async function telegramSetup({ container }: ExecArgs) {
   const store = process.env.STOREFRONT_URL
 
   if (!backend || !store || !process.env.TELEGRAM_WEBHOOK_SECRET) {
-    throw new Error("Set BACKEND_PUBLIC_URL, STOREFRONT_URL and TELEGRAM_WEBHOOK_SECRET first")
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      "Set BACKEND_PUBLIC_URL, STOREFRONT_URL and TELEGRAM_WEBHOOK_SECRET first"
+    )
   }
 
   await telegramCall("setWebhook", {

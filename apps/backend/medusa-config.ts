@@ -12,5 +12,9 @@ module.exports = defineConfig({
       jwtSecret: process.env.JWT_SECRET,
       cookieSecret: process.env.COOKIE_SECRET,
     }
-  }
+  },
+  modules: [
+    // App builder (server-driven UI), stories and push notifications
+    { resolve: "./src/modules/app_content" },
+  ],
 })

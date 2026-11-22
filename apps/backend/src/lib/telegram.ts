@@ -1,3 +1,5 @@
+import { MedusaError } from "@medusajs/framework/utils"
+
 /**
  * Minimal Telegram Bot API client (no dependencies).
  * Docs: https://core.telegram.org/bots/api
@@ -14,7 +16,7 @@ export async function telegramCall<T = unknown>(
 ): Promise<T> {
   const token = process.env.TELEGRAM_BOT_TOKEN
   if (!token) {
-    throw new Error("TELEGRAM_BOT_TOKEN is not set")
+    throw new MedusaError(MedusaError.Types.INVALID_DATA, "TELEGRAM_BOT_TOKEN is not set")
   }
   const res = await fetch(`${API}/bot${token}/${method}`, {
     method: "POST",
@@ -23,7 +25,7 @@ export async function telegramCall<T = unknown>(
   })
   const json = (await res.json()) as { ok: boolean; result: T; description?: string }
   if (!json.ok) {
-    throw new Error(`Telegram ${method} failed: ${json.description}`)
+    throw new MedusaError(MedusaError.Types.UNEXPECTED_STATE, `Telegram ${method} failed: ${json.description}`)
   }
   return json.result
 }
