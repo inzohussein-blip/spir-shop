@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Builds a signed release APK of the app.
+#
+#   ANDROID_HOME=/path/to/android-sdk ./scripts/build-apk.sh
+#
+# Needs: JDK 17+, Android SDK (platform 37, build-tools 37.0.0, NDK 27.1),
+# and credentials/keystore.properties (see README). Output: dist/spir-shop-<version>.apk
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+: "${ANDROID_HOME:?Set ANDROID_HOME to your Android SDK path}"
+PROPS=credentials/keystore.properties
+if [ ! -f "$PROPS" ]; then
+  echo "Missing $PROPS: release must be signed with the same key every time (see README)" >&2
+  exit 1
+fi
+
+VERSION=$(node -p "require('./app.json').expo.version")
+ARCHS=${ARCHS:-arm64-v8a,armeabi-v7a}
+
+# Regenerate the native project from app.json + config plugins
+EXPO_OFFLINE=1 CI=1 npx expo prebuild --platform android --clean --no-install
+
+# Pass signing properties to Gradle without writing them into the project
+GRADLE_ARGS=()
+while IFS='=' read -r key value; do
+  [[ -z "$key" || "$key" == \#* ]] && continue
+  GRADLE_ARGS+=("-P$key=$value")
+done < "$PROPS"
+
+# React Native's Gradle plugins need a JDK 17 toolchain (set JDK17_HOME if it is elsewhere)
+JDK17_HOME=${JDK17_HOME:-$(ls -d /usr/lib/jvm/java-17-openjdk* 2>/dev/null | head -1 || true)}
+if [ -n "$JDK17_HOME" ]; then
+  GRADLE_ARGS+=("-Porg.gradle.java.installations.paths=$JDK17_HOME" "-Porg.gradle.java.installations.auto-download=false")
+fi
+
+(cd android && ./gradlew assembleRelease --no-daemon "${GRADLE_ARGS[@]}" -PreactNativeArchitectures="$ARCHS")
+
+mkdir -p dist
+cp android/app/build/outputs/apk/release/app-release.apk "dist/spir-shop-$VERSION.apk"
+echo "APK: $(pwd)/dist/spir-shop-$VERSION.apk"

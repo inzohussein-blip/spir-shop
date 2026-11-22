@@ -1,5 +1,7 @@
+import { useRouter } from "expo-router"
 import { useState } from "react"
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from "react-native"
+import Button from "../../components/Button"
 import Text from "../../components/Text"
 import { COLORS } from "../../lib/config"
 import { useLayout } from "../../lib/layout"
@@ -10,6 +12,7 @@ import BlockRenderer from "../../sdui/Renderer"
  * the admin "App builder". Search lives in its own tab.
  */
 export default function Home() {
+  const router = useRouter()
   const { blocks, error, refresh, preview } = useLayout("home")
   const [refreshing, setRefreshing] = useState(false)
 
@@ -33,7 +36,10 @@ export default function Home() {
       {blocks ? (
         <BlockRenderer blocks={blocks} />
       ) : error ? (
-        <Text style={styles.empty}>تعذّر الاتصال بالمتجر. اسحب للأسفل لإعادة المحاولة.</Text>
+        <View style={{ gap: 16, marginTop: 40 }}>
+          <Text style={styles.empty}>تعذّر الاتصال بالمتجر. اسحب للأسفل لإعادة المحاولة.</Text>
+          <Button label="إعدادات الخادم" variant="outline" onPress={() => router.push("/server")} testID="open-server" />
+        </View>
       ) : (
         <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
       )}
@@ -42,6 +48,6 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  empty: { textAlign: "center", marginTop: 40, color: COLORS.muted },
+  empty: { textAlign: "center", color: COLORS.muted },
   previewBadge: { backgroundColor: COLORS.accent, borderRadius: 8, padding: 6 },
 })

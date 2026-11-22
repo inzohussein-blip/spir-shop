@@ -1,4 +1,36 @@
-export const BACKEND_URL = (process.env.EXPO_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000").replace(/\/$/, "")
+import AsyncStorage from "@react-native-async-storage/async-storage"
+
+/** Backend address baked in at build time (EXPO_PUBLIC_MEDUSA_BACKEND_URL). */
+export const DEFAULT_BACKEND_URL = (process.env.EXPO_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000").replace(/\/$/, "")
+
+const BACKEND_KEY = "spir_backend_url"
+let backendUrl = DEFAULT_BACKEND_URL
+
+/**
+ * Current backend address. It can be changed inside the app (server settings
+ * screen), e.g. to test an APK against a computer on the same Wi-Fi.
+ */
+export const getBackendUrl = () => backendUrl
+
+export async function loadBackendUrl() {
+  try {
+    const saved = await AsyncStorage.getItem(BACKEND_KEY)
+    if (saved) backendUrl = saved
+  } catch {
+    // keep the default
+  }
+}
+
+export async function saveBackendUrl(url: string | null) {
+  const clean = url?.trim().replace(/\/$/, "")
+  if (clean) {
+    await AsyncStorage.setItem(BACKEND_KEY, clean)
+    backendUrl = clean
+  } else {
+    await AsyncStorage.removeItem(BACKEND_KEY)
+    backendUrl = DEFAULT_BACKEND_URL
+  }
+}
 export const PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
 
 /** Design tokens (from the store UI kit in Figma) */

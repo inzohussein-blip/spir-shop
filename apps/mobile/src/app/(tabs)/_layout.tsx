@@ -1,4 +1,5 @@
-import { Tabs } from "expo-router"
+import { Tabs, useRouter } from "expo-router"
+import { Pressable } from "react-native"
 import Icon, { IconName } from "../../components/Icon"
 import { useCart } from "../../lib/cart"
 import { COLORS, FONTS } from "../../lib/config"
@@ -10,6 +11,7 @@ const tabIcon =
 /** Icon-only bottom bar, as in the design. Titles stay for accessibility and headers. */
 export default function TabsLayout() {
   const { count } = useCart()
+  const router = useRouter()
   return (
     <Tabs
       screenOptions={{
@@ -24,7 +26,16 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: "الرئيسية", headerTitle: "Spir Shop", tabBarIcon: tabIcon("home") }}
+        options={{
+          title: "الرئيسية",
+          headerTitle: "Spir Shop",
+          tabBarIcon: tabIcon("home"),
+          headerRight: () => (
+            <Pressable onPress={() => router.push("/server")} hitSlop={10} style={{ paddingHorizontal: 18 }} accessibilityLabel="الإعدادات">
+              <Icon name="settings" size={20} color={COLORS.muted} />
+            </Pressable>
+          ),
+        }}
       />
       <Tabs.Screen name="search" options={{ title: "البحث", tabBarIcon: tabIcon("search") }} />
       <Tabs.Screen

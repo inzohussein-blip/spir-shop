@@ -1,8 +1,12 @@
-import { BACKEND_URL, PUBLISHABLE_KEY } from "./config"
+import { getBackendUrl, PUBLISHABLE_KEY } from "./config"
+
+/** Origins the backend may use in file URLs when it is not configured with its public address. */
+const LOCAL_ORIGINS = ["http://localhost:9000", "http://127.0.0.1:9000"]
 
 /** Minimal Medusa Store API client (fetch-based, works on iOS/Android/web). */
 export async function storeFetch<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
-  const res = await fetch(`${BACKEND_URL}/store${path}`, {
+  const base = getBackendUrl()
+  const res = await fetch(`${base}/store${path}`, {
     method: init.method ?? "GET",
     headers: {
       "content-type": "application/json",
@@ -10,7 +14,17 @@ export async function storeFetch<T>(path: string, init: { method?: string; body?
     },
     body: init.body ? JSON.stringify(init.body) : undefined,
   })
-  const json = await res.json().catch(() => ({}))
+  // Image/video URLs stored as localhost are rewritten to the server the app talks to
+  let text = await res.text()
+  if (!LOCAL_ORIGINS.includes(base)) {
+    for (const origin of LOCAL_ORIGINS) text = text.split(origin).join(base)
+  }
+  let json: unknown = {}
+  try {
+    json = JSON.parse(text)
+  } catch {
+    // non-JSON error body
+  }
   if (!res.ok) {
     throw new Error((json as { message?: string }).message || `HTTP ${res.status}`)
   }

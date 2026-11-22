@@ -2,12 +2,12 @@ import { Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold, useFonts } from
 import * as Notifications from "expo-notifications"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Platform, View } from "react-native"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import UpdatePrompts from "../components/UpdatePrompts"
 import { CartProvider, useCart } from "../lib/cart"
-import { COLORS, FONTS } from "../lib/config"
+import { COLORS, FONTS, loadBackendUrl } from "../lib/config"
 import { openLink } from "../lib/links"
 import { syncPushToken } from "../lib/push"
 
@@ -39,8 +39,12 @@ function PushBridge() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold })
+  const [serverReady, setServerReady] = useState(false)
+  useEffect(() => {
+    loadBackendUrl().finally(() => setServerReady(true))
+  }, [])
   // Render with system fonts if the font files fail to load, rather than blocking the app
-  if (!fontsLoaded && !fontError) return null
+  if ((!fontsLoaded && !fontError) || !serverReady) return null
 
   return (
     <SafeAreaProvider>
@@ -67,6 +71,7 @@ export default function RootLayout() {
               options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }}
             />
             <Stack.Screen name="checkout" options={{ title: "إتمام الطلب" }} />
+            <Stack.Screen name="server" options={{ title: "إعدادات الخادم" }} />
             <Stack.Screen name="order/[id]" options={{ title: "تم الطلب", headerBackVisible: false }} />
           </Stack>
           <UpdatePrompts />

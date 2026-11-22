@@ -1,4 +1,6 @@
-import { Linking, Modal, Pressable, StyleSheet, View } from "react-native"
+import { useState } from "react"
+import { Linking, Modal, Platform, Pressable, StyleSheet, View } from "react-native"
+import { downloadAndInstallApk, isApkUrl } from "../lib/apk-update"
 import { COLORS } from "../lib/config"
 import { useOtaUpdate, useStoreUpdate } from "../lib/updates"
 import Text from "./Text"
@@ -9,9 +11,29 @@ export default function UpdatePrompts() {
   const store = useStoreUpdate()
   const s = store.state
 
-  const openStore = () => {
-    if (s.status !== "ok" && s.url) Linking.openURL(s.url)
+  const [progress, setProgress] = useState<number | null>(null)
+  const [failed, setFailed] = useState<string | null>(null)
+
+  /** Google Play / App Store link: open it. Direct APK link on Android: download and install in-app. */
+  const openStore = async () => {
+    if (s.status === "ok" || !s.url) return
+    if (Platform.OS === "android" && isApkUrl(s.url)) {
+      setFailed(null)
+      setProgress(0)
+      try {
+        await downloadAndInstallApk(s.url, setProgress)
+      } catch (e) {
+        setFailed((e as Error).message)
+      } finally {
+        setProgress(null)
+      }
+      return
+    }
+    Linking.openURL(s.url)
   }
+
+  const updateLabel = (idle: string) =>
+    progress === null ? idle : `جاري التحميل ${Math.round(progress * 100)}%`
 
   return (
     <>
@@ -24,9 +46,10 @@ export default function UpdatePrompts() {
             {(s.status !== "ok" && s.message) ||
               "هذه النسخة لم تعد مدعومة. حدّث التطبيق من المتجر حتى تكمل التسوق."}
           </Text>
-          <Pressable style={styles.primary} onPress={openStore} testID="store-update-required">
-            <Text style={styles.primaryText}>تحديث الآن</Text>
+          <Pressable style={styles.primary} onPress={openStore} disabled={progress !== null} testID="store-update-required">
+            <Text style={styles.primaryText}>{updateLabel("تحديث الآن")}</Text>
           </Pressable>
+          {failed ? <Text style={styles.error}>{failed}</Text> : null}
         </View>
       </Modal>
 
@@ -39,9 +62,10 @@ export default function UpdatePrompts() {
               {(s.status !== "ok" && s.message) ||
                 `النسخة ${s.status !== "ok" ? s.latest : ""} متوفرة الآن بميزات وتحسينات جديدة.`}
             </Text>
-            <Pressable style={styles.primary} onPress={openStore} testID="store-update-optional">
-              <Text style={styles.primaryText}>تحديث</Text>
+            <Pressable style={styles.primary} onPress={openStore} disabled={progress !== null} testID="store-update-optional">
+              <Text style={styles.primaryText}>{updateLabel("تحديث")}</Text>
             </Pressable>
+            {failed ? <Text style={styles.error}>{failed}</Text> : null}
             <Pressable style={styles.secondary} onPress={store.dismiss}>
               <Text style={styles.secondaryText}>لاحقاً</Text>
             </Pressable>
@@ -72,7 +96,8 @@ const styles = StyleSheet.create({
   card: { backgroundColor: "#fff", borderRadius: 16, padding: 24, gap: 12 },
   title: { fontSize: 20, fontWeight: "700", textAlign: "center", color: COLORS.primaryDark },
   body: { fontSize: 15, textAlign: "center", color: COLORS.muted, lineHeight: 24 },
-  primary: { backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 14, alignSelf: "stretch", marginTop: 8 },
+  primary: { backgroundColor: COLORS.primary, borderRadius: 24, height: 48, justifyContent: "center", alignSelf: "stretch", marginTop: 8 },
+  error: { color: COLORS.danger, textAlign: "center", fontSize: 13 },
   primaryText: { color: "#fff", textAlign: "center", fontWeight: "700", fontSize: 16 },
   secondary: { paddingVertical: 10 },
   secondaryText: { color: COLORS.muted, textAlign: "center" },
