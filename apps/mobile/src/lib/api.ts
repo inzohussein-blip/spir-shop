@@ -1,0 +1,101 @@
+import { BACKEND_URL, PUBLISHABLE_KEY } from "./config"
+
+/** Minimal Medusa Store API client (fetch-based, works on iOS/Android/web). */
+export async function storeFetch<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
+  const res = await fetch(`${BACKEND_URL}/store${path}`, {
+    method: init.method ?? "GET",
+    headers: {
+      "content-type": "application/json",
+      "x-publishable-api-key": PUBLISHABLE_KEY,
+    },
+    body: init.body ? JSON.stringify(init.body) : undefined,
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error((json as { message?: string }).message || `HTTP ${res.status}`)
+  }
+  return json as T
+}
+
+export type Price = { calculated_amount: number; original_amount: number; currency_code: string }
+export type Variant = {
+  id: string
+  title: string
+  calculated_price?: Price
+  inventory_quantity?: number | null
+  manage_inventory?: boolean
+  allow_backorder?: boolean
+}
+export type Product = {
+  id: string
+  title: string
+  handle: string
+  description: string | null
+  thumbnail: string | null
+  images?: { url: string }[]
+  variants: Variant[]
+  categories?: { id: string; name: string }[]
+}
+export type Category = { id: string; name: string; handle: string; parent_category_id: string | null }
+export type LineItem = {
+  id: string
+  title: string
+  subtitle?: string | null
+  variant_title?: string | null
+  thumbnail: string | null
+  quantity: number
+  unit_price: number
+  total: number
+}
+export type Cart = {
+  id: string
+  items: LineItem[]
+  subtotal: number
+  item_subtotal?: number
+  shipping_total: number
+  total: number
+  region_id: string
+  shipping_methods?: { shipping_option_id: string }[]
+}
+export type ShippingOption = { id: string; name: string; amount: number; type?: { description?: string } }
+export type Order = { id: string; display_id: number; total: number }
+
+let regionId: string | null = null
+export async function getRegionId(): Promise<string> {
+  if (regionId) return regionId
+  const { regions } = await storeFetch<{ regions: { id: string; currency_code: string }[] }>("/regions")
+  regionId = (regions.find((r) => r.currency_code === "iqd") ?? regions[0]).id
+  return regionId
+}
+
+const PRODUCT_FIELDS = "*variants.calculated_price,+variants.inventory_quantity,*categories,*images"
+
+export async function listProducts(params: { categoryId?: string; q?: string } = {}) {
+  const region = await getRegionId()
+  const qs = new URLSearchParams({ region_id: region, fields: PRODUCT_FIELDS, limit: "50" })
+  if (params.categoryId) qs.append("category_id[]", params.categoryId)
+  if (params.q) qs.set("q", params.q)
+  return (await storeFetch<{ products: Product[] }>(`/products?${qs}`)).products
+}
+
+export async function getProduct(handle: string) {
+  const region = await getRegionId()
+  const qs = new URLSearchParams({ region_id: region, fields: PRODUCT_FIELDS, handle })
+  return (await storeFetch<{ products: Product[] }>(`/products?${qs}`)).products[0] ?? null
+}
+
+export async function listCategories() {
+  const { product_categories } = await storeFetch<{ product_categories: Category[] }>(
+    "/product-categories?fields=id,name,handle,parent_category_id&limit=50"
+  )
+  return product_categories.filter((c) => !c.parent_category_id)
+}
+
+export type VersionInfo = {
+  latest_version: string
+  min_version: string
+  android_url: string
+  ios_url: string
+  message: string
+}
+export const getVersionInfo = () => storeFetch<VersionInfo>("/mobile-version")

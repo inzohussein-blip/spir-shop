@@ -6,7 +6,8 @@
 ```
 apps/
 ├── backend/      Medusa: API + لوحة التحكم (/app) + بوت تلكرام + كتالوج ميتا
-└── storefront/   Next.js: متجر الويب (PWA) + Telegram Mini App
+├── storefront/   Next.js: متجر الويب (PWA) + Telegram Mini App
+└── mobile/       Expo: تطبيق أندرويد وآيفون مع نظام تحديثات (انظر apps/mobile/README.md)
 ```
 
 ## ما الموجود حالياً
@@ -82,7 +83,8 @@ npm run dev                      # http://localhost:8000
 
 ## المراحل القادمة
 
-- [ ] تطبيق الموبايل (Expo / React Native) لأندرويد وآيفون مع إشعارات Push
+- [x] تطبيق الموبايل (Expo) مع تحديثات OTA وفحص نسخة المتجر
+- [ ] إشعارات Push للعروض
 - [ ] الدفع الإلكتروني: زين كاش، FIB، Qi Card (Payment Module مخصص)
 - [ ] ردود تلقائية على رسائل إنستغرام وماسنجر
 - [ ] تسجيل الدخول برقم الهاتف (OTP)

@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Spir Shop",
+    "slug": "spir-shop",
+    "scheme": "spirshop",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "runtimeVersion": { "policy": "appVersion" },
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#fbeeec"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.spirshop.app",
+      "infoPlist": { "ITSAppUsesNonExemptEncryption": false }
+    },
+    "android": {
+      "package": "com.spirshop.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#fbeeec",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-localization",
+        {
+          "forcesRTL": true,
+          "supportedLocales": { "ios": ["ar"], "android": ["ar"] }
+        }
+      ],
+      "expo-image"
+    ],
+    "experiments": { "typedRoutes": false }
+  }
+}
