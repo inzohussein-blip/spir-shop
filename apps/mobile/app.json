@@ -7,7 +7,9 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "runtimeVersion": { "policy": "appVersion" },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "updates": {
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
@@ -20,7 +22,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.spirshop.app",
-      "infoPlist": { "ITSAppUsesNonExemptEncryption": false }
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.spirshop.app",
@@ -44,11 +48,21 @@
         "expo-localization",
         {
           "forcesRTL": true,
-          "supportedLocales": { "ios": ["ar"], "android": ["ar"] }
+          "supportedLocales": {
+            "ios": [
+              "ar"
+            ],
+            "android": [
+              "ar"
+            ]
+          }
         }
       ],
-      "expo-image"
+      "expo-image",
+      "expo-video"
     ],
-    "experiments": { "typedRoutes": false }
+    "experiments": {
+      "typedRoutes": false
+    }
   }
 }

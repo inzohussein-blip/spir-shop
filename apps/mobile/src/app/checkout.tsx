@@ -17,6 +17,7 @@ import { ShippingOption } from "../lib/api"
 import { useCart } from "../lib/cart"
 import { COLORS, IRAQ_GOVERNORATES } from "../lib/config"
 import { formatIqd } from "../lib/format"
+import { rememberProvince } from "../lib/push"
 
 const Field = ({ label, ...props }: TextInputProps & { label: string }) => (
   <View style={{ gap: 6, flex: 1 }}>
@@ -71,6 +72,8 @@ export default function Checkout() {
     if (!shippingId) return setError("اختر طريقة التوصيل")
     try {
       const order = await placeOrder({ ...form, phone, shippingOptionId: shippingId })
+      // Used to target notifications by governorate
+      rememberProvince(form.province)
       router.replace({ pathname: "/order/[id]", params: { id: order.id, n: String(order.display_id), total: String(order.total) } })
     } catch (e) {
       setError((e as Error).message)

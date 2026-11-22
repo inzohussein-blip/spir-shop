@@ -3,7 +3,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router"
 import { useEffect, useState } from "react"
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native"
 import Text from "../../components/Text"
-import { getProduct, Product } from "../../lib/api"
+import { getProduct, Product, Variant } from "../../lib/api"
 import { useCart } from "../../lib/cart"
 import { COLORS } from "../../lib/config"
 import { formatIqd } from "../../lib/format"
@@ -29,6 +29,15 @@ export default function ProductScreen() {
   if (!product) return <ActivityIndicator color={COLORS.primary} style={{ marginTop: 60 }} />
 
   const variant = product.variants.find((v) => v.id === variantId)
+
+  // Color swatches: product.metadata.swatches = { "<option value>": "#hex" }
+  const swatches = product.metadata?.swatches ?? {}
+  const swatchFor = (v: Variant) => {
+    const value = v.options?.map((o) => o.value).find((val) => swatches[val]) ?? v.title
+    const hex = swatches[value]
+    return typeof hex === "string" && /^#[0-9a-f]{3,8}$/i.test(hex) ? hex : null
+  }
+  const hasSwatches = product.variants.some((v) => swatchFor(v))
   const inStock =
     !variant?.manage_inventory || variant.allow_backorder || (variant.inventory_quantity ?? 0) > 0
   const image = product.thumbnail || product.images?.[0]?.url
@@ -60,19 +69,33 @@ export default function ProductScreen() {
 
           {product.variants.length > 1 && (
             <View style={{ gap: 8 }}>
-              <Text style={styles.label}>اختر الحجم</Text>
+              <Text style={styles.label}>
+                {hasSwatches ? `الدرجة: ${variant?.title ?? ""}` : "اختر الحجم"}
+              </Text>
               <View style={styles.variants}>
-                {product.variants.map((v) => (
-                  <Pressable
-                    key={v.id}
-                    onPress={() => setVariantId(v.id)}
-                    style={[styles.variant, v.id === variantId && styles.variantActive]}
-                  >
-                    <Text style={v.id === variantId ? { color: "#fff", fontWeight: "700" } : undefined}>
-                      {v.title}
-                    </Text>
-                  </Pressable>
-                ))}
+                {product.variants.map((v) => {
+                  const color = swatchFor(v)
+                  const active = v.id === variantId
+                  return color ? (
+                    <Pressable
+                      key={v.id}
+                      onPress={() => setVariantId(v.id)}
+                      style={[styles.swatchRing, active && styles.swatchRingActive]}
+                      accessibilityLabel={v.title}
+                      testID={`swatch-${v.title}`}
+                    >
+                      <View style={[styles.swatch, { backgroundColor: color }]} />
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      key={v.id}
+                      onPress={() => setVariantId(v.id)}
+                      style={[styles.variant, active && styles.variantActive]}
+                    >
+                      <Text style={active ? { color: "#fff", fontWeight: "700" } : undefined}>{v.title}</Text>
+                    </Pressable>
+                  )
+                })}
               </View>
             </View>
           )}
@@ -106,7 +129,7 @@ export default function ProductScreen() {
 
 const styles = StyleSheet.create({
   center: { textAlign: "center", marginTop: 60 },
-  imageWrap: { aspectRatio: 1, backgroundColor: COLORS.soft, alignItems: "center", justifyContent: "center" },
+  imageWrap: { width: "100%", aspectRatio: 1, backgroundColor: COLORS.soft, alignItems: "center", justifyContent: "center" },
   body: { padding: 16, gap: 14 },
   title: { fontSize: 22, fontWeight: "700" },
   price: { fontSize: 20, color: COLORS.primary, fontWeight: "700" },
@@ -114,6 +137,9 @@ const styles = StyleSheet.create({
   variants: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   variant: { borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
   variantActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  swatchRing: { padding: 3, borderRadius: 24, borderWidth: 2, borderColor: "transparent" },
+  swatchRingActive: { borderColor: COLORS.primaryDark },
+  swatch: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" },
   description: { color: COLORS.muted, lineHeight: 24 },
   perks: { backgroundColor: COLORS.soft, borderRadius: 12, padding: 14, gap: 8 },
   footer: {

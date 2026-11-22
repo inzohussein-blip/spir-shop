@@ -21,6 +21,7 @@ export type Price = { calculated_amount: number; original_amount: number; curren
 export type Variant = {
   id: string
   title: string
+  options?: { value: string; option?: { title: string } }[]
   calculated_price?: Price
   inventory_quantity?: number | null
   manage_inventory?: boolean
@@ -35,6 +36,8 @@ export type Product = {
   images?: { url: string }[]
   variants: Variant[]
   categories?: { id: string; name: string }[]
+  /** metadata.swatches maps an option value to a color, e.g. { "Rose Nude": "#c48a7f" } */
+  metadata?: { swatches?: Record<string, string> } | null
 }
 export type Category = { id: string; name: string; handle: string; parent_category_id: string | null }
 export type LineItem = {
@@ -68,12 +71,20 @@ export async function getRegionId(): Promise<string> {
   return regionId
 }
 
-const PRODUCT_FIELDS = "*variants.calculated_price,+variants.inventory_quantity,*categories,*images"
+const PRODUCT_FIELDS =
+  "*variants.calculated_price,+variants.inventory_quantity,*variants.options,*categories,*images,+metadata"
 
-export async function listProducts(params: { categoryId?: string; q?: string } = {}) {
+export async function listProducts(
+  params: { categoryId?: string; collectionId?: string; q?: string; limit?: number } = {}
+) {
   const region = await getRegionId()
-  const qs = new URLSearchParams({ region_id: region, fields: PRODUCT_FIELDS, limit: "50" })
+  const qs = new URLSearchParams({
+    region_id: region,
+    fields: PRODUCT_FIELDS,
+    limit: String(params.limit ?? 50),
+  })
   if (params.categoryId) qs.append("category_id[]", params.categoryId)
+  if (params.collectionId) qs.append("collection_id[]", params.collectionId)
   if (params.q) qs.set("q", params.q)
   return (await storeFetch<{ products: Product[] }>(`/products?${qs}`)).products
 }
@@ -99,3 +110,27 @@ export type VersionInfo = {
   message: string
 }
 export const getVersionInfo = () => storeFetch<VersionInfo>("/mobile-version")
+
+/* ----------------------- server-driven UI & content ---------------------- */
+
+export type Block = { id: string; type: string; props: Record<string, unknown> }
+export type Layout = { page: string; version: number; blocks: Block[] }
+export const getLayout = (page: string) => storeFetch<Layout>(`/app-layouts/${page}`)
+
+export type Story = {
+  id: string
+  title: string
+  media_url: string
+  media_type: "image" | "video"
+  thumbnail_url: string | null
+  link: string | null
+  cta_label: string | null
+}
+export const listStories = async () => (await storeFetch<{ stories: Story[] }>("/app-stories")).stories
+
+export const registerPushToken = (body: {
+  token: string
+  platform: string
+  cart_id?: string | null
+  province?: string | null
+}) => storeFetch("/push-tokens", { method: "POST", body })
