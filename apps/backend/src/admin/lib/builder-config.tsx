@@ -10,7 +10,7 @@ import { adminFetch, Block, Option, uploadFile } from "./api"
  * that mimics the app's look; the real rendering happens in the app.
  */
 
-const C = { soft: "#fbeeec", primary: "#8a3b4a", dark: "#5c2733", border: "#eee3e4", muted: "#7a6f73" }
+const C = { soft: "#f3f3f3", primary: "#343434", dark: "#1d1f22", border: "#e8e8e8", muted: "#8a8a8f" }
 const box = { fontFamily: "system-ui, sans-serif", direction: "rtl" as const, padding: "8px 12px" }
 
 /* ------------------------------ custom fields ----------------------------- */

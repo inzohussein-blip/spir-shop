@@ -1,3 +1,4 @@
+import { Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold, useFonts } from "@expo-google-fonts/tajawal"
 import * as Notifications from "expo-notifications"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
@@ -6,7 +7,7 @@ import { Platform, View } from "react-native"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import UpdatePrompts from "../components/UpdatePrompts"
 import { CartProvider, useCart } from "../lib/cart"
-import { COLORS } from "../lib/config"
+import { COLORS, FONTS } from "../lib/config"
 import { openLink } from "../lib/links"
 import { syncPushToken } from "../lib/push"
 
@@ -37,6 +38,10 @@ function PushBridge() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({ Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold })
+  // Render with system fonts if the font files fail to load, rather than blocking the app
+  if (!fontsLoaded && !fontError) return null
+
   return (
     <SafeAreaProvider>
       <CartProvider>
@@ -48,12 +53,14 @@ export default function RootLayout() {
             screenOptions={{
               headerTitleAlign: "center",
               headerTintColor: COLORS.primaryDark,
+              headerTitleStyle: { fontFamily: FONTS.bold, fontSize: 18 },
+              headerShadowVisible: false,
               headerBackTitle: "رجوع",
               contentStyle: { backgroundColor: COLORS.bg },
             }}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="product/[handle]" options={{ title: "" }} />
+            <Stack.Screen name="product/[handle]" options={{ headerShown: false }} />
             <Stack.Screen name="category/[id]" options={{ title: "" }} />
             <Stack.Screen
               name="stories"

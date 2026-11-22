@@ -2,8 +2,9 @@ import { Image } from "expo-image"
 import { Link } from "expo-router"
 import { Pressable, StyleSheet, View } from "react-native"
 import { Product } from "../lib/api"
-import { COLORS } from "../lib/config"
+import { COLORS, RADIUS } from "../lib/config"
 import { formatIqd } from "../lib/format"
+import { CategoryIcon } from "./Icon"
 import Text from "./Text"
 
 export function lowestPrice(p: Product) {
@@ -11,6 +12,7 @@ export function lowestPrice(p: Product) {
   return prices.length ? Math.min(...prices) : null
 }
 
+/** Product tile: tall image on a light grey card, name, then bold price. */
 export default function ProductCard({ product }: { product: Product }) {
   const price = lowestPrice(product)
   const multi = product.variants.length > 1
@@ -21,7 +23,7 @@ export default function ProductCard({ product }: { product: Product }) {
           {product.thumbnail ? (
             <Image source={product.thumbnail} style={styles.image} contentFit="cover" />
           ) : (
-            <Text style={styles.placeholder}>💄</Text>
+            <CategoryIcon name={product.categories?.[0]?.name ?? ""} size={40} color={COLORS.muted} />
           )}
         </View>
         <Text style={styles.title} numberOfLines={2}>
@@ -39,17 +41,17 @@ export default function ProductCard({ product }: { product: Product }) {
 }
 
 const styles = StyleSheet.create({
-  card: { flex: 1, margin: 6, gap: 6, maxWidth: "50%" },
+  card: { flex: 1, margin: 7, gap: 4, maxWidth: "50%" },
   imageWrap: {
-    aspectRatio: 1,
-    borderRadius: 14,
+    aspectRatio: 0.74,
+    borderRadius: RADIUS.image,
     backgroundColor: COLORS.soft,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 6,
   },
   image: { width: "100%", height: "100%" },
-  placeholder: { fontSize: 40, textAlign: "center" },
-  title: { fontSize: 14, fontWeight: "600" },
-  price: { fontSize: 14, color: COLORS.primary, fontWeight: "700" },
+  title: { fontSize: 13, fontWeight: "500" },
+  price: { fontSize: 16, fontWeight: "700" },
 })

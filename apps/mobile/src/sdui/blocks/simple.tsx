@@ -19,7 +19,7 @@ export function HeroBanner({ props }: BlockProps) {
       style={[styles.hero, { backgroundColor: str(props.background_color, COLORS.soft) }]}
     >
       {image ? <Image source={image} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
-      <View style={[styles.heroContent, image ? styles.heroOverlay : null]}>
+      <View style={styles.heroContent}>
         {str(props.title) ? (
           <Text style={[styles.heroTitle, { color: textColor }]}>{str(props.title)}</Text>
         ) : null}
@@ -90,22 +90,21 @@ export function CountdownOffer({ props }: BlockProps) {
 }
 
 const styles = StyleSheet.create({
-  hero: { borderRadius: 16, overflow: "hidden", minHeight: 150, justifyContent: "flex-end" },
-  heroContent: { padding: 20, gap: 6 },
-  heroOverlay: { backgroundColor: "rgba(0,0,0,0.25)" },
-  heroTitle: { fontSize: 22, fontWeight: "700" },
+  hero: { borderRadius: 12, overflow: "hidden", height: 170, justifyContent: "center" },
+  heroContent: { padding: 22, gap: 4, maxWidth: "70%" },
+  heroTitle: { fontSize: 26, fontWeight: "700", lineHeight: 34 },
   heroSub: { fontSize: 14 },
   cta: {
     alignSelf: "flex-start",
-    backgroundColor: COLORS.primary,
+    backgroundColor: "#ffffff",
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginTop: 6,
+    paddingVertical: 7,
+    marginTop: 10,
   },
-  ctaText: { color: "#fff", fontWeight: "700" },
-  heading: { fontWeight: "700", color: COLORS.text },
-  offer: { borderRadius: 14, padding: 16, flexDirection: "row", alignItems: "center", gap: 12 },
+  ctaText: { color: COLORS.text, fontWeight: "700", fontSize: 13 },
+  heading: { fontWeight: "700", color: COLORS.text, paddingHorizontal: 4 },
+  offer: { borderRadius: 12, padding: 18, flexDirection: "row", alignItems: "center", gap: 12 },
   offerTitle: { color: "#fff", fontWeight: "700", fontSize: 17 },
   offerSub: { color: "#fff", opacity: 0.9 },
   timer: { backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },

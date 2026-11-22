@@ -1,6 +1,7 @@
 import { Link } from "expo-router"
 import { useEffect, useState } from "react"
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { CategoryIcon } from "../../components/Icon"
 import ProductCard from "../../components/ProductCard"
 import Text from "../../components/Text"
 import { Category, listCategories, listProducts, Product } from "../../lib/api"
@@ -56,7 +57,7 @@ export function ProductCarousel({ props }: BlockProps) {
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
           {products.map((p) => (
-            <View key={p.id} style={{ width: 150 }}>
+            <View key={p.id} style={{ width: 140 }}>
               <ProductCard product={p} />
             </View>
           ))}
@@ -90,6 +91,7 @@ export function ProductGrid({ props }: BlockProps) {
   )
 }
 
+/** Round icon per category with its name underneath (top of the home screen in the design). */
 export function CategoryChips({ props }: BlockProps) {
   const [cats, setCats] = useState<Category[]>([])
   useEffect(() => {
@@ -97,13 +99,18 @@ export function CategoryChips({ props }: BlockProps) {
   }, [])
   if (!cats.length) return null
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 12 }}>
       <SectionTitle title={str(props.title)} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 18, paddingHorizontal: 4 }}>
         {cats.map((c) => (
           <Link key={c.id} href={`/category/${c.id}`} asChild>
-            <Pressable style={styles.chip}>
-              <Text style={styles.chipText}>{c.name}</Text>
+            <Pressable style={styles.cat} testID={`category-${c.id}`}>
+              <View style={styles.catCircle}>
+                <CategoryIcon name={c.name} size={24} />
+              </View>
+              <Text style={styles.catText} numberOfLines={2}>
+                {c.name}
+              </Text>
             </Pressable>
           </Link>
         ))}
@@ -114,15 +121,16 @@ export function CategoryChips({ props }: BlockProps) {
 
 const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 4 },
-  title: { fontSize: 18, fontWeight: "700" },
-  more: { color: COLORS.primary, fontSize: 13 },
-  chip: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: "#fff",
+  title: { fontSize: 20, fontWeight: "700" },
+  more: { color: COLORS.muted, fontSize: 13 },
+  cat: { alignItems: "center", width: 64, gap: 6 },
+  catCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.soft,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  chipText: { fontSize: 13 },
+  catText: { fontSize: 11, color: COLORS.muted, textAlign: "center" },
 })
