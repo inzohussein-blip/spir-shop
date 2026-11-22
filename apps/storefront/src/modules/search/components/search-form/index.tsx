@@ -33,7 +33,7 @@ const SearchForm = ({ countryCode, defaultValue, className }: SearchFormProps) =
       type="submit"
       className="h-10 px-4 rounded-md bg-black text-white hover:bg-gray-800"
     >
-      Search
+      البحث
     </button>
   </form>
 )

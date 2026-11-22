@@ -5,7 +5,7 @@ import { getRegion } from "@lib/data/regions"
 import StoreTemplate from "@modules/store/templates"
 
 export const metadata: Metadata = {
-  title: "Store",
+  title: "المتجر",
   description: "Explore all of our products.",
 }
 

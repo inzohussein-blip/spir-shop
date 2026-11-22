@@ -7,7 +7,7 @@ export const dynamic = "force-static"
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title: "Contact",
+  title: "التواصل",
   description: `How to contact ${STORE_NAME}.`,
 }
 

@@ -106,7 +106,7 @@ const EditAddress: React.FC<EditAddressProps> = ({
             data-testid="address-edit-button"
           >
             <Edit />
-            Edit
+            تعديل
           </button>
           <button
             className="text-small-regular text-ui-fg-base flex items-center gap-x-2"

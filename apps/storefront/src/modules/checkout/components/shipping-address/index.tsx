@@ -5,7 +5,8 @@ import Input from "@modules/common/components/input"
 import { mapKeys } from "lodash"
 import React, { useEffect, useMemo, useState } from "react"
 import AddressSelect from "../address-select"
-import CountrySelect from "../country-select"
+import NativeSelect from "@modules/common/components/native-select"
+import { IRAQ_GOVERNORATES } from "@lib/util/iraq"
 
 const ShippingAddress = ({
   customer,
@@ -99,7 +100,7 @@ const ShippingAddress = ({
       {customer && (addressesInRegion?.length || 0) > 0 && (
         <Container className="mb-6 flex flex-col gap-y-4 p-5">
           <p className="text-small-regular">
-            {`Hi ${customer.first_name}, do you want to use one of your saved addresses?`}
+            {`أهلاً ${customer.first_name}، تريد تستخدم أحد عناوينك المحفوظة؟`}
           </p>
           <AddressSelect
             addresses={customer.addresses}
@@ -132,7 +133,7 @@ const ShippingAddress = ({
           data-testid="shipping-last-name-input"
         />
         <Input
-          label="العنوان"
+          label="أقرب نقطة دالة / الشارع"
           name="shipping_address.address_1"
           autoComplete="address-line1"
           value={formData["shipping_address.address_1"]}
@@ -140,23 +141,8 @@ const ShippingAddress = ({
           required
           data-testid="shipping-address-input"
         />
-        <Input
-          label="الشركة"
-          name="shipping_address.company"
-          value={formData["shipping_address.company"]}
-          onChange={handleChange}
-          autoComplete="organization"
-          data-testid="shipping-company-input"
-        />
-        <Input
-          label="الرمز البريدي"
-          name="shipping_address.postal_code"
-          autoComplete="postal-code"
-          value={formData["shipping_address.postal_code"]}
-          onChange={handleChange}
-          required
-          data-testid="shipping-postal-code-input"
-        />
+        <input type="hidden" name="shipping_address.company" value={formData["shipping_address.company"]} />
+        <input type="hidden" name="shipping_address.postal_code" value={formData["shipping_address.postal_code"]} />
         <Input
           label="المدينة / المنطقة"
           name="shipping_address.city"
@@ -166,23 +152,25 @@ const ShippingAddress = ({
           required
           data-testid="shipping-city-input"
         />
-        <CountrySelect
+        <input
+          type="hidden"
           name="shipping_address.country_code"
-          autoComplete="country"
-          region={cart?.region}
-          value={formData["shipping_address.country_code"]}
-          onChange={handleChange}
-          required
-          data-testid="shipping-country-select"
+          value={formData["shipping_address.country_code"] || countriesInRegion?.[0] || "iq"}
         />
-        <Input
-          label="المحافظة"
+        <NativeSelect
           name="shipping_address.province"
-          autoComplete="address-level1"
+          placeholder="المحافظة"
           value={formData["shipping_address.province"]}
           onChange={handleChange}
+          required
           data-testid="shipping-province-input"
-        />
+        >
+          {IRAQ_GOVERNORATES.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </NativeSelect>
       </div>
       <div className="my-8">
         <Checkbox
@@ -206,11 +194,14 @@ const ShippingAddress = ({
           data-testid="shipping-email-input"
         />
         <Input
-          label="رقم الهاتف"
+          label="رقم الهاتف (07XX...)"
           name="shipping_address.phone"
           autoComplete="tel"
+          type="tel"
+          dir="ltr"
           value={formData["shipping_address.phone"]}
           onChange={handleChange}
+          required
           data-testid="shipping-phone-input"
         />
       </div>

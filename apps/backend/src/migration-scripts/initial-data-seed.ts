@@ -199,6 +199,16 @@ export default async function initial_data_seed({
     },
   });
 
+  // Link only the sizes each product actually has (otherwise every size shows on every product)
+  const sizes = (...values: string[]) => [
+    {
+      id: sizeOption.id,
+      value_ids: (sizeOption.values ?? [])
+        .filter((v) => values.includes(v.value))
+        .map((v) => v.id),
+    },
+  ]
+
   const single = (sku: string, price: number) => [
     {
       title: "قياسي",
@@ -218,7 +228,7 @@ export default async function initial_data_seed({
           category_ids: [cat("العناية بالبشرة")],
           status: ProductStatus.PUBLISHED,
           shipping_profile_id: shippingProfile.id,
-          options: [{ id: sizeOption.id }],
+          options: sizes("30ml", "50ml"),
           variants: [
             { title: "30ml", sku: "VITC-30", options: { "الحجم": "30ml" }, prices: [{ amount: 25000, currency_code: "iqd" }] },
             { title: "50ml", sku: "VITC-50", options: { "الحجم": "50ml" }, prices: [{ amount: 35000, currency_code: "iqd" }] },
@@ -232,7 +242,7 @@ export default async function initial_data_seed({
           category_ids: [cat("العناية بالبشرة")],
           status: ProductStatus.PUBLISHED,
           shipping_profile_id: shippingProfile.id,
-          options: [{ id: sizeOption.id }],
+          options: sizes("50ml"),
           variants: [
             { title: "50ml", sku: "SPF50-50", options: { "الحجم": "50ml" }, prices: [{ amount: 18000, currency_code: "iqd" }] },
           ],
@@ -245,7 +255,7 @@ export default async function initial_data_seed({
           category_ids: [cat("المكياج")],
           status: ProductStatus.PUBLISHED,
           shipping_profile_id: shippingProfile.id,
-          options: [{ id: sizeOption.id }],
+          options: sizes("قياسي"),
           variants: single("LIP-MATTE", 12000),
           sales_channels: [{ id: defaultSalesChannel.id }],
         },
@@ -256,7 +266,7 @@ export default async function initial_data_seed({
           category_ids: [cat("العناية بالشعر")],
           status: ProductStatus.PUBLISHED,
           shipping_profile_id: shippingProfile.id,
-          options: [{ id: sizeOption.id }],
+          options: sizes("100ml"),
           variants: [
             { title: "100ml", sku: "ARGAN-100", options: { "الحجم": "100ml" }, prices: [{ amount: 15000, currency_code: "iqd" }] },
           ],

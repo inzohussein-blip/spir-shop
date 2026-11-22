@@ -19,7 +19,7 @@ const getQuery = (q?: string | string[]) =>
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const query = getQuery((await props.searchParams).q)
   return {
-    title: query ? `Search results for "${query}"` : "Search",
+    title: query ? `نتائج البحث عن "${query}"` : "البحث",
     robots: { index: false, follow: true },
   }
 }
@@ -43,7 +43,7 @@ export default async function SearchPage(props: Props) {
   return (
     <div className="content-container py-6" data-testid="search-container">
       <h1 className="text-2xl-semi mb-6">
-        {query ? `Search results for "${query}"` : "Search"}
+        {query ? `نتائج البحث عن "${query}"` : "البحث"}
       </h1>
       <SearchForm countryCode={countryCode} defaultValue={query} className="mb-8 max-w-xl" />
       {query && (

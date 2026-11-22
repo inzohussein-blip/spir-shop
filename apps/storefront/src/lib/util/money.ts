@@ -15,12 +15,21 @@ export const convertToLocale = ({
   maximumFractionDigits,
   locale = "en-US",
 }: ConvertToLocaleParams) => {
-  return currency_code && !isEmpty(currency_code)
-    ? new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: currency_code,
-        minimumFractionDigits,
-        maximumFractionDigits,
-      }).format(amount)
-    : amount.toString()
+  if (!currency_code || isEmpty(currency_code)) {
+    return amount.toString()
+  }
+
+  // Iraqi dinar: whole numbers with the local "د.ع" suffix (e.g. 25,000 د.ع)
+  if (currency_code.toLowerCase() === "iqd") {
+    return `${new Intl.NumberFormat(locale, {
+      maximumFractionDigits: 0,
+    }).format(amount)} د.ع`
+  }
+
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: currency_code,
+    minimumFractionDigits,
+    maximumFractionDigits,
+  }).format(amount)
 }

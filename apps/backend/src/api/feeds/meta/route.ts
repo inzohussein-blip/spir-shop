@@ -68,7 +68,9 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
 
     for (const v of p.variants ?? []) {
       if (!v) continue
-      const price = (v.prices ?? []).find((pr) => pr?.currency_code === currency)
+      // `prices` comes from the variant <-> price set link (not in the generated type)
+      const prices = (v as unknown as { prices?: { amount: number; currency_code: string }[] }).prices
+      const price = (prices ?? []).find((pr) => pr?.currency_code === currency)
       if (!price) continue
       const qty = availability[v.id]?.availability ?? 0
 

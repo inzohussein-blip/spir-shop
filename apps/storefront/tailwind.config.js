@@ -59,6 +59,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          "IBM Plex Sans Arabic",
           "Inter",
           "-apple-system",
           "BlinkMacSystemFont",

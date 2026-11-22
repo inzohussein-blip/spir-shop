@@ -14,11 +14,11 @@ type ProductTabsProps = {
 const ProductTabs = ({ product }: ProductTabsProps) => {
   const tabs = [
     {
-      label: "Product Information",
+      label: "معلومات المنتج",
       component: <ProductInfoTab product={product} />,
     },
     {
-      label: "Shipping & Returns",
+      label: "التوصيل والإرجاع",
       component: <ShippingInfoTab />,
     },
   ]
@@ -87,8 +87,7 @@ const ShippingInfoTab = () => {
           <div>
             <span className="font-semibold">توصيل سريع</span>
             <p className="max-w-sm">
-              Your package will arrive in 3-5 business days at your pick up
-              location or in the comfort of your home.
+              يوصلك الطلب لباب البيت خلال 24 ساعة في بغداد و2-3 أيام لباقي المحافظات، والدفع عند الاستلام.
             </p>
           </div>
         </div>
@@ -97,8 +96,7 @@ const ShippingInfoTab = () => {
           <div>
             <span className="font-semibold">استبدال سهل</span>
             <p className="max-w-sm">
-              Is the fit not quite right? No worries - we&apos;ll exchange your
-              product for a new one.
+              إذا وصلك المنتج تالف أو غير مطابق، نستبدله لك بدون أي تكلفة.
             </p>
           </div>
         </div>
@@ -107,9 +105,7 @@ const ShippingInfoTab = () => {
           <div>
             <span className="font-semibold">إرجاع سهل</span>
             <p className="max-w-sm">
-              Just return your product and we&apos;ll refund your money. No
-              questions asked – we&apos;ll do our best to make sure your return
-              is hassle-free.
+              تقدر ترجع المنتج غير المفتوح خلال 7 أيام من الاستلام.
             </p>
           </div>
         </div>

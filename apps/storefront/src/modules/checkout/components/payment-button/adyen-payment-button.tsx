@@ -144,7 +144,7 @@ const AdyenPaymentButton = ({
   if (notReady) {
     return (
       <Button disabled size="large" data-testid={dataTestId}>
-        Place order
+        تأكيد الطلب
       </Button>
     )
   }

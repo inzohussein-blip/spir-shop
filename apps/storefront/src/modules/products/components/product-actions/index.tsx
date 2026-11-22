@@ -186,7 +186,7 @@ export default function ProductActions({
               className="text-small-regular text-ui-fg-subtle"
               data-testid="product-availability"
             >
-              {inStock ? "In stock" : "Out of stock"}
+              {inStock ? "متوفر" : "نفد من المخزون"}
             </p>
           )}
 
@@ -205,10 +205,10 @@ export default function ProductActions({
             data-testid="add-product-button"
           >
             {!selectedVariant
-              ? "Select variant"
+              ? "اختر الحجم"
               : !inStock || !isValidVariant
-              ? "Out of stock"
-              : "Add to cart"}
+              ? "نفد من المخزون"
+              : "أضف إلى السلة"}
           </Button>
         </form>
         <MobileActions
