@@ -181,6 +181,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                           return (
                             <div key={option.id}>
                               <OptionSelect
+                        swatches={product.metadata?.swatches as Record<string, string> | undefined}
                                 option={option}
                                 current={options[option.id]}
                                 updateOption={updateOptions}
