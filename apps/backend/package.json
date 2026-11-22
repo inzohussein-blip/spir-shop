@@ -31,6 +31,7 @@
     "@medusajs/framework": "2.23.0",
     "@medusajs/medusa": "2.23.0",
     "@medusajs/ui": "4.3.0",
+    "@puckeditor/core": "^0.24.1",
     "@tanstack/react-query": "5.107.1",
     "react-i18next": "18.0.1",
     "react-router-dom": "7.18.5",
