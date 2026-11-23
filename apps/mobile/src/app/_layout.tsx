@@ -66,6 +66,7 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="product/[handle]" options={{ headerShown: false }} />
             <Stack.Screen name="category/[id]" options={{ title: "" }} />
+            <Stack.Screen name="brand/[id]" options={{ title: "" }} />
             <Stack.Screen
               name="stories"
               options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }}

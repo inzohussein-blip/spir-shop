@@ -11,6 +11,7 @@ export const APP_BLOCK_TYPES = [
   "hero_banner",
   "story_bar",
   "category_chips",
+  "brand_strip",
   "product_carousel",
   "product_grid",
   "countdown_offer",
@@ -48,6 +49,7 @@ export const DEFAULT_HOME_BLOCKS: AppBlock[] = [
     },
   },
   { id: "categories", type: "category_chips", props: { title: "الأقسام" } },
+  { id: "brands", type: "brand_strip", props: { title: "العلامات التجارية" } },
   {
     id: "best",
     type: "product_carousel",

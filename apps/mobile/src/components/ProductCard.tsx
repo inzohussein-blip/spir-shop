@@ -15,7 +15,8 @@ export function lowestPrice(p: Product) {
 /** Product tile: tall image on a light grey card, name, then bold price. */
 export default function ProductCard({ product }: { product: Product }) {
   const price = lowestPrice(product)
-  const multi = product.variants.length > 1
+  // "from" only when variants have different prices
+  const multi = new Set(product.variants.map((v) => v.calculated_price?.calculated_amount)).size > 1
   return (
     <Link href={`/product/${product.handle}`} asChild>
       <Pressable style={styles.card} testID={`product-${product.handle}`}>
@@ -26,6 +27,11 @@ export default function ProductCard({ product }: { product: Product }) {
             <CategoryIcon name={product.categories?.[0]?.name ?? ""} size={40} color={COLORS.muted} />
           )}
         </View>
+        {product.collection?.title ? (
+          <Text style={styles.brand} numberOfLines={1}>
+            {product.collection.title}
+          </Text>
+        ) : null}
         <Text style={styles.title} numberOfLines={2}>
           {product.title}
         </Text>
@@ -52,6 +58,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   image: { width: "100%", height: "100%" },
+  brand: { fontSize: 11, color: COLORS.muted, fontWeight: "700", letterSpacing: 0.3 },
   title: { fontSize: 13, fontWeight: "500" },
   price: { fontSize: 16, fontWeight: "700" },
 })

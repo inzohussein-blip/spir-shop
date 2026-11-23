@@ -4,6 +4,7 @@ import type { Block } from "../lib/api"
 import { CountdownOffer, Heading, HeroBanner, Spacer } from "./blocks/simple"
 import { CategoryChips, ProductCarousel, ProductGrid } from "./blocks/products"
 import { StoryBar, VideoBanner } from "./blocks/media"
+import { BrandStrip } from "./blocks/brands"
 import type { BlockProps } from "./types"
 
 /**
@@ -15,6 +16,7 @@ const REGISTRY: Record<string, ComponentType<BlockProps>> = {
   hero_banner: HeroBanner,
   story_bar: StoryBar,
   category_chips: CategoryChips,
+  brand_strip: BrandStrip,
   product_carousel: ProductCarousel,
   product_grid: ProductGrid,
   countdown_offer: CountdownOffer,

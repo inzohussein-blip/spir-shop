@@ -50,6 +50,8 @@ export type Product = {
   images?: { url: string }[]
   variants: Variant[]
   categories?: { id: string; name: string }[]
+  /** The product's brand (a product collection) */
+  collection?: { id: string; title: string } | null
   /** metadata.swatches maps an option value to a color, e.g. { "Rose Nude": "#c48a7f" } */
   metadata?: { swatches?: Record<string, string> } | null
 }
@@ -86,7 +88,7 @@ export async function getRegionId(): Promise<string> {
 }
 
 const PRODUCT_FIELDS =
-  "*variants.calculated_price,+variants.inventory_quantity,*variants.options,*categories,*images,+metadata"
+  "*variants.calculated_price,+variants.inventory_quantity,*variants.options,*categories,*images,+metadata,*collection"
 
 export async function listProducts(
   params: { categoryId?: string; collectionId?: string; q?: string; limit?: number } = {}
@@ -148,3 +150,10 @@ export const registerPushToken = (body: {
   cart_id?: string | null
   province?: string | null
 }) => storeFetch("/push-tokens", { method: "POST", body })
+
+/* --------------------------------- brands -------------------------------- */
+
+/** Brands are product collections (manage them in the admin under Products > Collections). */
+export type Brand = { id: string; title: string; handle: string; metadata?: { origin?: string } | null }
+export const listBrands = async () =>
+  (await storeFetch<{ collections: Brand[] }>("/collections?fields=id,title,handle,metadata&limit=50")).collections

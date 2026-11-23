@@ -214,11 +214,11 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
       options: [
         { label: "كل المنتجات", value: "all" },
         { label: "قسم", value: "category" },
-        { label: "مجموعة", value: "collection" },
+        { label: "علامة تجارية / مجموعة", value: "collection" },
       ],
     },
     category_id: { type: "select" as const, label: "القسم", options: [{ label: "-", value: "" }, ...categories] },
-    collection_id: { type: "select" as const, label: "المجموعة", options: [{ label: "-", value: "" }, ...collections] },
+    collection_id: { type: "select" as const, label: "العلامة التجارية / المجموعة", options: [{ label: "-", value: "" }, ...collections] },
     limit: { type: "number" as const, label: "عدد المنتجات", min: 1, max: 50 },
   }
 
@@ -227,7 +227,7 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
     root: { fields: {} },
     categories: {
       content: { title: "محتوى", components: ["hero_banner", "story_bar", "countdown_offer", "video_banner"] },
-      products: { title: "منتجات", components: ["product_carousel", "product_grid", "category_chips"] },
+      products: { title: "منتجات", components: ["product_carousel", "product_grid", "category_chips", "brand_strip"] },
       layout: { title: "تنسيق", components: ["heading", "spacer"] },
     },
     components: {
@@ -301,6 +301,30 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
         fields: { title: { type: "text", label: "العنوان" }, ...sourceFields },
         defaultProps: { title: "كل المنتجات", source: "all", category_id: "", collection_id: "", limit: 6 },
         render: (p) => <ProductsPreview {...(p as Parameters<typeof ProductsPreview>[0])} grid />,
+      },
+      brand_strip: {
+        label: "العلامات التجارية",
+        fields: { title: { type: "text", label: "العنوان" } },
+        defaultProps: { title: "العلامات التجارية" },
+        render: (p) => (
+          <div style={box}>
+            {p.title ? <div style={{ fontWeight: 700, marginBottom: 8 }}>{p.title}</div> : null}
+            <div style={{ display: "flex", gap: 8, overflow: "hidden" }}>
+              {collections.length ? (
+                collections.map((c) => (
+                  <span
+                    key={c.value}
+                    style={{ minWidth: 96, height: 56, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 12, background: "#fff", boxShadow: "0 4px 10px rgba(0,0,0,.05)", border: "1px solid #f0f0f0", fontWeight: 700, fontSize: 12, padding: "0 8px" }}
+                  >
+                    {c.label}
+                  </span>
+                ))
+              ) : (
+                <span style={{ color: C.muted, fontSize: 12 }}>أضف علامات تجارية من Products ← Collections</span>
+              )}
+            </div>
+          </div>
+        ),
       },
       category_chips: {
         label: "الأقسام",
