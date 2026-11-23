@@ -34,7 +34,10 @@ if [ -n "$JDK17_HOME" ]; then
   GRADLE_ARGS+=("-Porg.gradle.java.installations.paths=$JDK17_HOME" "-Porg.gradle.java.installations.auto-download=false")
 fi
 
-(cd android && ./gradlew assembleRelease --no-daemon "${GRADLE_ARGS[@]}" -PreactNativeArchitectures="$ARCHS")
+# Maven Central rate-limits bursts of downloads (HTTP 429): retry with backoff
+GRADLE_ARGS+=("-Dorg.gradle.internal.repository.max.retries=8" "-Dorg.gradle.internal.repository.initial.backoff=3000")
+
+(cd android && ./gradlew assembleRelease --no-daemon --max-workers="${GRADLE_WORKERS:-3}" "${GRADLE_ARGS[@]}" -PreactNativeArchitectures="$ARCHS")
 
 mkdir -p dist
 cp android/app/build/outputs/apk/release/app-release.apk "dist/spir-shop-$VERSION.apk"
