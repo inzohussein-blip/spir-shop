@@ -1,4 +1,34 @@
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { getBackendUrl, PUBLISHABLE_KEY } from "./config"
+
+/**
+ * Publishable key: baked in at build time when EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+ * is set, otherwise discovered from the server (GET /mobile/config) and cached
+ * per server address. This lets one APK (built by CI) work with any server.
+ */
+let discoveredKey: { base: string; key: string } | null = null
+async function publishableKey(base: string): Promise<string> {
+  if (PUBLISHABLE_KEY) return PUBLISHABLE_KEY
+  if (discoveredKey?.base === base) return discoveredKey.key
+  const cacheKey = `spir_pk_${base}`
+  try {
+    const res = await fetch(`${base}/mobile/config`)
+    const json = (await res.json()) as { publishable_key?: string | null }
+    if (json.publishable_key) {
+      discoveredKey = { base, key: json.publishable_key }
+      AsyncStorage.setItem(cacheKey, json.publishable_key).catch(() => undefined)
+      return json.publishable_key
+    }
+  } catch {
+    // offline: fall back to the last known key for this server
+  }
+  const cached = await AsyncStorage.getItem(cacheKey).catch(() => null)
+  if (cached) {
+    discoveredKey = { base, key: cached }
+    return cached
+  }
+  return ""
+}
 
 /** Origins the backend may use in file URLs when it is not configured with its public address. */
 const LOCAL_ORIGINS = ["http://localhost:9000", "http://127.0.0.1:9000"]
@@ -10,7 +40,7 @@ export async function storeFetch<T>(path: string, init: { method?: string; body?
     method: init.method ?? "GET",
     headers: {
       "content-type": "application/json",
-      "x-publishable-api-key": PUBLISHABLE_KEY,
+      "x-publishable-api-key": await publishableKey(base),
     },
     body: init.body ? JSON.stringify(init.body) : undefined,
   })

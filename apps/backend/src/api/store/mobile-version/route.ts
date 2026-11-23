@@ -1,5 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { compareVersions, getLatestGithubRelease } from "../../../lib/github-release"
 
 /**
  * GET /store/mobile-version  (needs the publishable API key header, like all /store routes)
@@ -15,7 +16,9 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
  *   mobile_ios_url          App Store link
  *   mobile_update_message   optional custom text shown in the prompt
  *
- * Small JS/UI changes don't need this: they ship instantly as OTA updates (expo-updates).
+ * With MOBILE_GITHUB_REPO set, the latest GitHub Release built by CI is merged in:
+ * whichever is newer (admin values or the GitHub release) wins, so pushing a
+ * version tag is enough to ship an update to every installed app.
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
@@ -27,12 +30,26 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const pick = (key: string, env: string, fallback = "") =>
     String(meta[key] ?? process.env[env] ?? fallback)
 
-  res.setHeader("Cache-Control", "public, max-age=300")
-  res.json({
+  const info = {
     latest_version: pick("mobile_latest_version", "MOBILE_LATEST_VERSION", "1.0.0"),
     min_version: pick("mobile_min_version", "MOBILE_MIN_VERSION", "1.0.0"),
     android_url: pick("mobile_android_url", "MOBILE_ANDROID_URL"),
     ios_url: pick("mobile_ios_url", "MOBILE_IOS_URL"),
     message: pick("mobile_update_message", "MOBILE_UPDATE_MESSAGE"),
-  })
+    source: "admin" as "admin" | "github",
+  }
+
+  const gh = await getLatestGithubRelease()
+  if (gh && compareVersions(gh.version, info.latest_version) > 0) {
+    info.latest_version = gh.version
+    info.android_url = gh.apkUrl
+    info.message = gh.notes || info.message
+    info.source = "github"
+    if (gh.required && compareVersions(gh.version, info.min_version) > 0) {
+      info.min_version = gh.version
+    }
+  }
+
+  res.setHeader("Cache-Control", "public, max-age=300")
+  res.json(info)
 }
