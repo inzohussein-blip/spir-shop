@@ -9,7 +9,7 @@ import Steps from "../../components/Steps"
 
 /** "Order completed" screen (step 3 of the checkout design). */
 export default function OrderPlaced() {
-  const { n, total } = useLocalSearchParams<{ id: string; n?: string; total?: string }>()
+  const { id, n, total } = useLocalSearchParams<{ id: string; n?: string; total?: string }>()
   const router = useRouter()
   return (
     <View style={styles.wrap}>
@@ -30,7 +30,10 @@ export default function OrderPlaced() {
         </Text>
       </View>
 
-      <Button label="متابعة التسوق" onPress={() => router.replace("/")} />
+      <View style={{ gap: 10 }}>
+        <Button label="تتبّعي طلبك" onPress={() => router.replace(`/orders/${id}`)} testID="track-order" />
+        <Button label="متابعة التسوق" variant="outline" onPress={() => router.replace("/")} />
+      </View>
     </View>
   )
 }

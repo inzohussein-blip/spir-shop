@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
 import Icon, { CategoryIcon } from "../../components/Icon"
 import Text from "../../components/Text"
-import { Category, listCategories } from "../../lib/api"
+import { Brand, Category, listBrands, listCategories } from "../../lib/api"
 import { COLORS, FONTS, RADIUS } from "../../lib/config"
 
 /** Search + browse by category. */
@@ -11,9 +11,11 @@ export default function SearchScreen() {
   const router = useRouter()
   const [q, setQ] = useState("")
   const [cats, setCats] = useState<Category[]>([])
+  const [brands, setBrands] = useState<Brand[]>([])
 
   useEffect(() => {
     listCategories().then(setCats).catch(() => setCats([]))
+    listBrands().then(setBrands).catch(() => setBrands([]))
   }, [])
 
   const submit = () => {
@@ -29,12 +31,28 @@ export default function SearchScreen() {
           onChangeText={setQ}
           onSubmitEditing={submit}
           returnKeyType="search"
+          autoFocus
           placeholder="ابحثي عن منتج..."
           placeholderTextColor={COLORS.muted}
           style={styles.input}
           testID="search-input"
         />
       </View>
+
+      {brands.length ? (
+        <>
+          <Text style={styles.title}>العلامات التجارية</Text>
+          <View style={styles.brands}>
+            {brands.map((b) => (
+              <Link key={b.id} href={`/brand/${b.id}`} asChild>
+                <Pressable style={styles.brand}>
+                  <Text style={styles.brandText}>{b.title}</Text>
+                </Pressable>
+              </Link>
+            ))}
+          </View>
+        </>
+      ) : null}
 
       <Text style={styles.title}>تصفّحي الأقسام</Text>
       {cats.map((c) => (
@@ -98,4 +116,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   rowText: { flex: 1, fontSize: 15, fontWeight: "500" },
+  brands: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  brand: { borderWidth: 1, borderColor: COLORS.border, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8 },
+  brandText: { fontSize: 13, fontWeight: "700" },
 })

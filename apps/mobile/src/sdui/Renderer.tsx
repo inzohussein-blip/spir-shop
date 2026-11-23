@@ -5,6 +5,7 @@ import { CountdownOffer, Heading, HeroBanner, Spacer } from "./blocks/simple"
 import { CategoryChips, ProductCarousel, ProductGrid } from "./blocks/products"
 import { StoryBar, VideoBanner } from "./blocks/media"
 import { BrandStrip } from "./blocks/brands"
+import { FlashSale, HeroCarousel, TrustStrip } from "./blocks/commerce"
 import type { BlockProps } from "./types"
 
 /**
@@ -14,6 +15,9 @@ import type { BlockProps } from "./types"
  */
 const REGISTRY: Record<string, ComponentType<BlockProps>> = {
   hero_banner: HeroBanner,
+  hero_carousel: HeroCarousel,
+  trust_strip: TrustStrip,
+  flash_sale: FlashSale,
   story_bar: StoryBar,
   category_chips: CategoryChips,
   brand_strip: BrandStrip,

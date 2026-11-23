@@ -89,6 +89,10 @@ export type Category = { id: string; name: string; handle: string; parent_catego
 export type LineItem = {
   id: string
   title: string
+  variant_id?: string
+  product_id?: string
+  product_title?: string | null
+  variant?: { inventory_quantity?: number | null; manage_inventory?: boolean } | null
   subtitle?: string | null
   variant_title?: string | null
   thumbnail: string | null
@@ -101,8 +105,11 @@ export type Cart = {
   items: LineItem[]
   subtotal: number
   item_subtotal?: number
+  item_total?: number
+  discount_total?: number
   shipping_total: number
   total: number
+  promotions?: { code?: string | null }[]
   region_id: string
   shipping_methods?: { shipping_option_id: string }[]
 }
@@ -121,7 +128,7 @@ const PRODUCT_FIELDS =
   "*variants.calculated_price,+variants.inventory_quantity,*variants.options,*categories,*images,+metadata,*collection"
 
 export async function listProducts(
-  params: { categoryId?: string; collectionId?: string; q?: string; limit?: number } = {}
+  params: { categoryId?: string; collectionId?: string; q?: string; limit?: number; ids?: string[] } = {}
 ) {
   const region = await getRegionId()
   const qs = new URLSearchParams({
@@ -131,6 +138,7 @@ export async function listProducts(
   })
   if (params.categoryId) qs.append("category_id[]", params.categoryId)
   if (params.collectionId) qs.append("collection_id[]", params.collectionId)
+  for (const id of params.ids ?? []) qs.append("id[]", id)
   if (params.q) qs.set("q", params.q)
   return (await storeFetch<{ products: Product[] }>(`/products?${qs}`)).products
 }
@@ -179,6 +187,7 @@ export const registerPushToken = (body: {
   platform: string
   cart_id?: string | null
   province?: string | null
+  order_id?: string | null
 }) => storeFetch("/push-tokens", { method: "POST", body })
 
 /* --------------------------------- brands -------------------------------- */
@@ -187,3 +196,69 @@ export const registerPushToken = (body: {
 export type Brand = { id: string; title: string; handle: string; metadata?: { origin?: string } | null }
 export const listBrands = async () =>
   (await storeFetch<{ collections: Brand[] }>("/collections?fields=id,title,handle,metadata&limit=50")).collections
+
+/* ------------------------- settings, deals, reviews ------------------------ */
+
+export type AppSettings = {
+  free_shipping_threshold: number
+  whatsapp_number: string
+  telegram_username: string
+  support_phone: string
+  baghdad_eta: string
+  provinces_eta: string
+  trust_badges: string[]
+}
+export const getAppSettings = async () => (await storeFetch<{ settings: AppSettings }>("/app-settings")).settings
+
+export type Sale = { title: string; ends_at: string | null; product_ids: string[] }
+export const getSale = async () => (await storeFetch<{ sale: Sale | null }>("/app-sale")).sale
+
+export type Rating = { average: number; count: number }
+export const getRatings = async (productIds: string[]) =>
+  (await storeFetch<{ ratings: Record<string, Rating> }>(`/app-reviews/summary?product_ids=${productIds.join(",")}`))
+    .ratings
+
+export type Review = { id: string; rating: number; name: string; comment: string | null; created_at: string }
+export type ReviewSummary = { average: number; count: number; distribution: { star: number; count: number }[] }
+export const getReviews = (productId: string) =>
+  storeFetch<{ summary: ReviewSummary; reviews: Review[] }>(`/app-reviews?product_id=${productId}`)
+export const createReview = (body: { product_id: string; order_id: string; rating: number; name: string; comment?: string }) =>
+  storeFetch("/app-reviews", { method: "POST", body })
+
+/* --------------------------------- orders --------------------------------- */
+
+export type OrderStepKey = "placed" | "confirmed" | "shipped" | "delivered"
+export type AppOrder = {
+  id: string
+  display_id: number
+  status: string
+  created_at: string
+  total: number
+  item_total: number
+  shipping_total: number
+  current: OrderStepKey | "canceled"
+  canceled_at: string | null
+  steps: { key: OrderStepKey; label: string; at: string | null }[]
+  items: {
+    id: string
+    title: string
+    product_title?: string | null
+    variant_title: string | null
+    thumbnail: string | null
+    quantity: number
+    product_id: string
+    variant_id?: string | null
+    product_handle?: string | null
+    unit_price: number
+  }[]
+  shipping_address?: { province?: string | null; city?: string | null; address_1?: string | null } | null
+  shipping_methods?: { name: string }[]
+}
+export const getOrders = async (ids: string[]) =>
+  ids.length ? (await storeFetch<{ orders: AppOrder[] }>(`/app-orders?ids=${ids.join(",")}`)).orders : []
+
+export type AppNotification = { id: string; title: string; body: string; link: string | null; sent_at: string }
+export const getNotifications = async (province?: string | null) =>
+  (await storeFetch<{ notifications: AppNotification[] }>(
+    `/app-notifications?province=${encodeURIComponent(province ?? "")}`
+  )).notifications

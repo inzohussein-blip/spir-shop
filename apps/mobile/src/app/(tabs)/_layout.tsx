@@ -1,22 +1,24 @@
-import { Tabs, useRouter } from "expo-router"
-import { Pressable } from "react-native"
+import { Tabs } from "expo-router"
 import Icon, { IconName } from "../../components/Icon"
 import { useCart } from "../../lib/cart"
 import { COLORS, FONTS } from "../../lib/config"
+import { useStore } from "../../lib/store"
 
 const tabIcon =
   (name: IconName) =>
-  ({ focused }: { focused: boolean }) => <Icon name={name} size={22} color={focused ? COLORS.text : "#c4c4c4"} />
+  ({ focused }: { focused: boolean }) => <Icon name={name} size={22} color={focused ? COLORS.text : "#b5b5b9"} />
 
-/** Icon-only bottom bar, as in the design. Titles stay for accessibility and headers. */
+/** Bottom bar: Home, Categories, Wishlist, Cart, Account (icons with labels). */
 export default function TabsLayout() {
   const { count } = useCart()
-  const router = useRouter()
+  const { wishlist } = useStore()
   return (
     <Tabs
       screenOptions={{
-        tabBarShowLabel: false,
-        tabBarStyle: { height: 64, borderTopColor: COLORS.border, paddingTop: 6 },
+        tabBarActiveTintColor: COLORS.text,
+        tabBarInactiveTintColor: "#b5b5b9",
+        tabBarLabelStyle: { fontFamily: FONTS.medium, fontSize: 11 },
+        tabBarStyle: { height: 70, borderTopColor: COLORS.border, paddingTop: 6, paddingBottom: 8 },
         headerTitleAlign: "center",
         headerTintColor: COLORS.text,
         headerTitleStyle: { fontFamily: FONTS.bold, fontSize: 18 },
@@ -24,29 +26,27 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: COLORS.bg },
       }}
     >
+      <Tabs.Screen name="index" options={{ title: "الرئيسية", headerShown: false, tabBarIcon: tabIcon("home") }} />
+      <Tabs.Screen name="search" options={{ title: "الأقسام", tabBarIcon: tabIcon("grid") }} />
       <Tabs.Screen
-        name="index"
+        name="wishlist"
         options={{
-          title: "الرئيسية",
-          headerTitle: "Spir Shop",
-          tabBarIcon: tabIcon("home"),
-          headerRight: () => (
-            <Pressable onPress={() => router.push("/server")} hitSlop={10} style={{ paddingHorizontal: 18 }} accessibilityLabel="الإعدادات">
-              <Icon name="settings" size={20} color={COLORS.muted} />
-            </Pressable>
-          ),
+          title: "المفضلة",
+          tabBarIcon: tabIcon("heart"),
+          tabBarBadge: wishlist.length > 0 ? wishlist.length : undefined,
+          tabBarBadgeStyle: { backgroundColor: COLORS.danger, fontFamily: FONTS.bold, fontSize: 10 },
         }}
       />
-      <Tabs.Screen name="search" options={{ title: "البحث", tabBarIcon: tabIcon("search") }} />
       <Tabs.Screen
         name="cart"
         options={{
-          title: "سلتك",
+          title: "السلة",
           tabBarIcon: tabIcon("shopping-bag"),
           tabBarBadge: count > 0 ? count : undefined,
-          tabBarBadgeStyle: { backgroundColor: COLORS.accent, fontFamily: FONTS.bold, fontSize: 11 },
+          tabBarBadgeStyle: { backgroundColor: COLORS.accent, fontFamily: FONTS.bold, fontSize: 10 },
         }}
       />
+      <Tabs.Screen name="account" options={{ title: "حسابي", tabBarIcon: tabIcon("user") }} />
     </Tabs>
   )
 }

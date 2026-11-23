@@ -25,3 +25,10 @@ export function categoryIcon(name: string): CategoryIconName {
 export function CategoryIcon({ name, color = COLORS.text, size = 22 }: { name: string; color?: string; size?: number }) {
   return <MaterialCommunityIcons name={categoryIcon(name)} size={size} color={color} />
 }
+
+/** Wishlist heart: filled red when saved. */
+export function HeartIcon({ filled, size = 16, color = COLORS.text }: { filled: boolean; size?: number; color?: string }) {
+  return (
+    <MaterialCommunityIcons name={filled ? "heart" : "heart-outline"} size={size} color={filled ? COLORS.danger : color} />
+  )
+}

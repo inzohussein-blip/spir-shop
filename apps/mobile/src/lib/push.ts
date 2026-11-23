@@ -27,7 +27,7 @@ let cachedToken: string | null = null
  * to the backend together with the cart id and province for targeting.
  * Safe to call often; does nothing on web, simulators, or without an EAS projectId.
  */
-export async function syncPushToken(cartId?: string | null) {
+export async function syncPushToken(cartId?: string | null, orderId?: string | null) {
   try {
     if (Platform.OS === "web" || !Device.isDevice) return
     const projectId =
@@ -55,6 +55,7 @@ export async function syncPushToken(cartId?: string | null) {
       platform: Platform.OS,
       cart_id: cartId ?? null,
       province,
+      order_id: orderId ?? null,
     })
   } catch {
     // Notifications are optional: never break the app because of them

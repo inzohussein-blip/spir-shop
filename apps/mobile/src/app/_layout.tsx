@@ -7,6 +7,7 @@ import { Platform, View } from "react-native"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import UpdatePrompts from "../components/UpdatePrompts"
 import { CartProvider, useCart } from "../lib/cart"
+import { StoreProvider } from "../lib/store"
 import { COLORS, FONTS, loadBackendUrl } from "../lib/config"
 import { openLink } from "../lib/links"
 import { syncPushToken } from "../lib/push"
@@ -48,6 +49,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <StoreProvider>
       <CartProvider>
         {/* dir="rtl" makes react-native-web lay out right-to-left; native uses forcesRTL in app.json */}
         <View style={{ flex: 1, backgroundColor: COLORS.bg }} {...({ dir: "rtl" } as object)}>
@@ -73,11 +75,17 @@ export default function RootLayout() {
             />
             <Stack.Screen name="checkout" options={{ title: "إتمام الطلب" }} />
             <Stack.Screen name="server" options={{ title: "إعدادات الخادم" }} />
+            <Stack.Screen name="orders/index" options={{ title: "طلباتي" }} />
+            <Stack.Screen name="orders/[id]" options={{ title: "تتبع الطلب" }} />
+            <Stack.Screen name="rate" options={{ title: "تقييم المنتج" }} />
+            <Stack.Screen name="address" options={{ title: "عنوان التوصيل" }} />
+            <Stack.Screen name="notifications" options={{ title: "الإشعارات" }} />
             <Stack.Screen name="order/[id]" options={{ title: "تم الطلب", headerBackVisible: false }} />
           </Stack>
           <UpdatePrompts />
         </View>
       </CartProvider>
+      </StoreProvider>
     </SafeAreaProvider>
   )
 }

@@ -3,7 +3,8 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 import { Cart, getRegionId, Order, ShippingOption, storeFetch } from "./api"
 
 const CART_KEY = "spir_cart_id"
-const CART_FIELDS = "fields=*items,+items.thumbnail,+shipping_methods.shipping_option_id"
+const CART_FIELDS =
+  "fields=*items,+items.thumbnail,+items.product_id,+shipping_methods.shipping_option_id,*promotions,+discount_total,+item_total,+item_subtotal"
 
 type CheckoutInput = {
   firstName: string
@@ -24,6 +25,8 @@ type CartContextValue = {
   updateItem: (lineId: string, quantity: number) => Promise<void>
   removeItem: (lineId: string) => Promise<void>
   listShippingOptions: () => Promise<ShippingOption[]>
+  applyPromo: (code: string) => Promise<void>
+  removePromo: (code: string) => Promise<void>
   placeOrder: (input: CheckoutInput) => Promise<Order>
 }
 
@@ -87,6 +90,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await loadCart(cart.id)
     })
 
+  /** Discount codes (Medusa promotions). Throws with the server message when invalid. */
+  const applyPromo = (code: string) =>
+    run(async () => {
+      if (!cart) return
+      await storeFetch(`/carts/${cart.id}/promotions`, { method: "POST", body: { promo_codes: [code.trim().toUpperCase()] } })
+      await loadCart(cart.id)
+    })
+
+  const removePromo = (code: string) =>
+    run(async () => {
+      if (!cart) return
+      await storeFetch(`/carts/${cart.id}/promotions`, { method: "DELETE", body: { promo_codes: [code] } })
+      await loadCart(cart.id)
+    })
+
   const listShippingOptions = async () => {
     if (!cart) return []
     const { shipping_options } = await storeFetch<{ shipping_options: ShippingOption[] }>(
@@ -144,7 +162,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, count, loading, addItem, updateItem, removeItem, listShippingOptions, placeOrder }}
+      value={{ cart, count, loading, addItem, updateItem, removeItem, listShippingOptions, applyPromo, removePromo, placeOrder }}
     >
       {children}
     </CartContext.Provider>
