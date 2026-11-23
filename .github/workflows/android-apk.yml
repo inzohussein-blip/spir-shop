@@ -12,11 +12,15 @@
 # shows "new version available" (or blocks when the notes contain [required]),
 # downloads the APK and opens the Android installer.
 #
-# Required repository secrets (Settings > Secrets and variables > Actions):
+# Signing: works out of the box with React Native's standard debug key (same
+# key on every build, so in-app updates between these builds install).
+# Optional, recommended before a public launch: add these repository secrets to
+# sign with your own private key instead (Settings > Secrets and variables > Actions):
 #   ANDROID_KEYSTORE_BASE64   base64 of credentials/spir-release.jks
 #   ANDROID_KEYSTORE_PASSWORD
 #   ANDROID_KEY_ALIAS
 #   ANDROID_KEY_PASSWORD
+# Switching keys later means users reinstall the app once.
 # Optional repository variable:
 #   EXPO_PUBLIC_MEDUSA_BACKEND_URL   public server address baked into the APK
 #                                    (users can still change it in the app settings)
@@ -26,7 +30,7 @@ name: Android APK
 on:
   push:
     branches: [ccr-fb77656e-dw5gy8, main]
-    paths: [apps/mobile/app.json]
+    paths: [apps/mobile/app.json, .github/workflows/android-apk.yml]
     tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
@@ -117,16 +121,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check signing secrets
+      - name: Choose signing key
+        id: signing
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KSP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KA: ${{ secrets.ANDROID_KEY_ALIAS }}
           KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -z "$KS" ] || [ -z "$KSP" ] || [ -z "$KA" ] || [ -z "$KP" ]; then
-            echo "::error::Missing ANDROID_* signing secrets. Updates must be signed with the same key as the installed app."
-            exit 1
+          if [ -n "$KS" ] && [ -n "$KSP" ] && [ -n "$KA" ] && [ -n "$KP" ]; then
+            echo "private=true" >> "$GITHUB_OUTPUT"
+            echo "Signing with the private release key"
+          else
+            echo "private=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No ANDROID_* secrets: signing with the standard React Native debug key (fine for a trial build)"
           fi
 
       - uses: actions/setup-node@v4
@@ -161,14 +169,14 @@ jobs:
             fs.writeFileSync("app.json", JSON.stringify(app, null, 2) + "\n")
           '
 
-      - name: Write signing key and app config
+      - name: Write private signing key
+        if: steps.signing.outputs.private == 'true'
         working-directory: apps/mobile
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KSP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KA: ${{ secrets.ANDROID_KEY_ALIAS }}
           KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          BACKEND_URL: ${{ vars.EXPO_PUBLIC_MEDUSA_BACKEND_URL }}
         run: |
           mkdir -p credentials
           echo "$KS" | base64 -d > credentials/spir-release.jks
@@ -178,6 +186,12 @@ jobs:
             echo "SPIR_RELEASE_KEY_ALIAS=$KA"
             echo "SPIR_RELEASE_KEY_PASSWORD=$KP"
           } > credentials/keystore.properties
+
+      - name: Write app config
+        working-directory: apps/mobile
+        env:
+          BACKEND_URL: ${{ vars.EXPO_PUBLIC_MEDUSA_BACKEND_URL }}
+        run: |
           # The publishable key is discovered from the server at runtime (GET /mobile/config)
           echo "EXPO_PUBLIC_MEDUSA_BACKEND_URL=${BACKEND_URL:-http://localhost:9000}" > .env
 

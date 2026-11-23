@@ -11,8 +11,10 @@ cd "$(dirname "$0")/.."
 : "${ANDROID_HOME:?Set ANDROID_HOME to your Android SDK path}"
 PROPS=credentials/keystore.properties
 if [ ! -f "$PROPS" ]; then
-  echo "Missing $PROPS: release must be signed with the same key every time (see README)" >&2
-  exit 1
+  # No private key: sign with React Native's standard debug key (the same file in
+  # every build, so updates between these builds still install). Fine for a
+  # trial; use a private key before a public launch (see README).
+  echo "WARNING: $PROPS not found, signing with the standard debug key" >&2
 fi
 
 VERSION=$(node -p "require('./app.json').expo.version")
@@ -26,7 +28,7 @@ GRADLE_ARGS=()
 while IFS='=' read -r key value; do
   [[ -z "$key" || "$key" == \#* ]] && continue
   GRADLE_ARGS+=("-P$key=$value")
-done < "$PROPS"
+done < <([ -f "$PROPS" ] && cat "$PROPS" || true)
 
 # React Native's Gradle plugins need a JDK 17 toolchain (set JDK17_HOME if it is elsewhere)
 JDK17_HOME=${JDK17_HOME:-$(ls -d /usr/lib/jvm/java-17-openjdk* 2>/dev/null | head -1 || true)}
