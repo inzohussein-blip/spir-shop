@@ -1,13 +1,16 @@
 # Builds a signed Android APK and publishes it as a GitHub Release.
 #
-# Trigger:
-#   - push a tag:      git tag v1.1.0 && git push origin v1.1.0
-#   - or run manually: Actions > Android APK > Run workflow (version, notes, required)
+# Three ways to release:
+#   1. Bump "version" in apps/mobile/app.json and push to the default branch
+#      (the commit message becomes the release notes; add [required] to force the update)
+#   2. Push a tag:      git tag v1.1.0 && git push origin v1.1.0
+#   3. Run manually:    Actions > Android APK > Run workflow (version, notes, required)
+# A version that already has a release is skipped.
 #
 # Installed apps pick the new release up automatically: the backend's
 # /store/mobile-version reads the latest release (MOBILE_GITHUB_REPO), the app
-# shows "new version available" (or blocks when the release notes contain
-# [required]), downloads the APK and opens the Android installer.
+# shows "new version available" (or blocks when the notes contain [required]),
+# downloads the APK and opens the Android installer.
 #
 # Required repository secrets (Settings > Secrets and variables > Actions):
 #   ANDROID_KEYSTORE_BASE64   base64 of credentials/spir-release.jks
@@ -22,6 +25,8 @@ name: Android APK
 
 on:
   push:
+    branches: [ccr-fb77656e-dw5gy8, main]
+    paths: [apps/mobile/app.json]
     tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
@@ -41,25 +46,40 @@ permissions:
   contents: write
 
 concurrency:
-  group: android-apk-${{ github.ref }}
+  group: android-apk
   cancel-in-progress: false
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
-    env:
-      ANDROID_NDK_VERSION: "27.1.12297006"
+    outputs:
+      build: ${{ steps.decide.outputs.build }}
+      version: ${{ steps.decide.outputs.version }}
+      code: ${{ steps.decide.outputs.code }}
+      notes: ${{ steps.decide.outputs.notes }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve version
-        id: version
+      - name: Decide version and whether to build
+        id: decide
         env:
-          INPUT_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_NOTES: ${{ inputs.notes }}
+          INPUT_REQUIRED: ${{ inputs.required_update }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then RAW="$INPUT_VERSION"; else RAW="$REF_NAME"; fi
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            RAW="$INPUT_VERSION"; NOTES="$INPUT_NOTES"
+            [ "$INPUT_REQUIRED" = "true" ] && NOTES="$NOTES"$'\n'"[required]"
+          elif [ "$REF_TYPE" = "tag" ]; then
+            RAW="$REF_NAME"; NOTES="$COMMIT_MESSAGE"
+          else
+            RAW=$(node -p "require('./apps/mobile/app.json').expo.version"); NOTES="$COMMIT_MESSAGE"
+          fi
           VERSION="${RAW#v}"
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Version must look like 1.2.3 (got '$RAW')"; exit 1
@@ -67,9 +87,35 @@ jobs:
           IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION"
           # Monotonic Android versionCode derived from the version: 1.2.3 -> 10203
           CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "code=$CODE" >> "$GITHUB_OUTPUT"
-          echo "Building $VERSION (versionCode $CODE)"
+
+          BUILD=true
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::notice::Release v$VERSION already exists, skipping"
+            BUILD=false
+          fi
+          [ -z "$NOTES" ] && NOTES="نسخة جديدة من تطبيق Spir Shop"
+
+          {
+            echo "build=$BUILD"
+            echo "version=$VERSION"
+            echo "code=$CODE"
+            echo "notes<<NOTES_EOF"
+            echo "$NOTES"
+            echo "NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Version $VERSION (versionCode $CODE), build=$BUILD"
+
+  build:
+    needs: prepare
+    if: needs.prepare.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      VERSION_CODE: ${{ needs.prepare.outputs.code }}
+      ANDROID_NDK_VERSION: "27.1.12297006"
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Check signing secrets
         env:
@@ -106,15 +152,12 @@ jobs:
 
       - name: Set app version
         working-directory: apps/mobile
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          CODE: ${{ steps.version.outputs.code }}
         run: |
           node -e '
             const fs = require("fs")
             const app = JSON.parse(fs.readFileSync("app.json", "utf8"))
             app.expo.version = process.env.VERSION
-            app.expo.android.versionCode = Number(process.env.CODE)
+            app.expo.android.versionCode = Number(process.env.VERSION_CODE)
             fs.writeFileSync("app.json", JSON.stringify(app, null, 2) + "\n")
           '
 
@@ -148,7 +191,7 @@ jobs:
       - name: Verify signature
         working-directory: apps/mobile
         run: |
-          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/spir-shop-${{ steps.version.outputs.version }}.apk" | grep -E "Signer #1 certificate (DN|SHA-256)"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/spir-shop-$VERSION.apk" | grep -E "Signer #1 certificate (DN|SHA-256)"
 
       - name: Remove signing material
         if: always()
@@ -157,28 +200,16 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: spir-shop-${{ steps.version.outputs.version }}
+          name: spir-shop-${{ env.VERSION }}
           path: apps/mobile/dist/*.apk
           retention-days: 30
-
-      - name: Release notes
-        id: notes
-        env:
-          NOTES: ${{ inputs.notes }}
-          REQUIRED: ${{ inputs.required_update }}
-        run: |
-          {
-            echo "body<<EOF"
-            if [ -n "$NOTES" ]; then echo "$NOTES"; else echo "نسخة جديدة من تطبيق Spir Shop"; fi
-            if [ "$REQUIRED" = "true" ]; then echo "[required]"; fi
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Spir Shop ${{ steps.version.outputs.version }}
-          body: ${{ steps.notes.outputs.body }}
-          files: apps/mobile/dist/spir-shop-${{ steps.version.outputs.version }}.apk
+          tag_name: v${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: Spir Shop ${{ env.VERSION }}
+          body: ${{ needs.prepare.outputs.notes }}
+          files: apps/mobile/dist/spir-shop-${{ env.VERSION }}.apk
           make_latest: "true"
