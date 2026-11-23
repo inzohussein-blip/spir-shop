@@ -88,6 +88,7 @@ export type CreateReviewInput = {
   rating: number
   name: string
   comment?: string | null
+  images?: string[] | null
 }
 
 /** Only customers who ordered the product can review it (once per order). */
@@ -117,6 +118,8 @@ const createReviewStep = createStep(
       ...input,
       rating: Math.min(5, Math.max(1, Math.round(input.rating))),
       comment: input.comment || null,
+      // json column holding a list of URLs
+      images: (input.images?.length ? input.images : null) as unknown as Record<string, unknown> | null,
     })
     return new StepResponse(review, review.id)
   },

@@ -1,122 +1,170 @@
-import { Link, useRouter } from "expo-router"
+import { Image } from "expo-image"
+import { useRouter } from "expo-router"
 import { useEffect, useState } from "react"
-import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
-import Icon, { CategoryIcon } from "../../components/Icon"
+import { LayoutAnimation, Platform, Pressable, ScrollView, StyleSheet, UIManager, View } from "react-native"
+import Header from "../../components/Header"
+import Icon from "../../components/Icon"
 import Text from "../../components/Text"
-import { Brand, Category, listBrands, listCategories } from "../../lib/api"
-import { COLORS, FONTS, RADIUS } from "../../lib/config"
+import { Brand, Category, countProducts, listAllCategories, listBrands, listProducts } from "../../lib/api"
+import { COLORS, SHADOW } from "../../lib/config"
 
-/** Search + browse by category. */
-export default function SearchScreen() {
+if (Platform.OS === "android") UIManager.setLayoutAnimationEnabledExperimental?.(true)
+
+type Row = { id: string; name: string; href: string; count?: number; indent?: boolean }
+type Card = { key: string; title: string; color: string; image?: string; rows: Row[]; href: string }
+
+const FALLBACK_COLORS = ["#a3a798", "#8d8180", "#44535a", "#b9adb0", "#c8b49a"]
+
+/** Search pill + square filter button (design: top of "discover" and "search"). */
+export function SearchBar({ onPress, onFilter }: { onPress: () => void; onFilter: () => void }) {
+  return (
+    <View style={styles.searchRow}>
+      <Pressable style={styles.search} onPress={onPress} testID="discover-search">
+        <Icon name="search" size={19} color="#8a8a8f" />
+        <Text style={styles.searchText}>ابحثي</Text>
+      </Pressable>
+      <Pressable style={styles.filterBtn} onPress={onFilter} accessibilityLabel="فلتر" testID="discover-filter">
+        <Icon name="sliders" size={19} color="#5a5a5e" />
+      </Pressable>
+    </View>
+  )
+}
+
+/** One coloured category card; tapping it opens the list of sub-categories underneath. */
+function DiscoverCard({ card, open, onToggle }: { card: Card; open: boolean; onToggle: () => void }) {
   const router = useRouter()
-  const [q, setQ] = useState("")
-  const [cats, setCats] = useState<Category[]>([])
-  const [brands, setBrands] = useState<Brand[]>([])
+  return (
+    <View>
+      <Pressable style={[styles.card, { backgroundColor: card.color }]} onPress={onToggle} testID={`discover-${card.key}`}>
+        <Text style={styles.cardTitle} numberOfLines={2}>
+          {card.title}
+        </Text>
+        <View style={styles.cardArt}>
+          <View style={styles.ringOuter} />
+          <View style={styles.ringInner} />
+          {card.image ? <Image source={card.image} style={styles.cardImage} contentFit="cover" /> : null}
+        </View>
+      </Pressable>
+      {open ? (
+        <View style={styles.rows}>
+          {card.rows.map((r) => (
+            <Pressable key={r.id} style={styles.row} onPress={() => router.push(r.href as never)} testID={`discover-row-${r.id}`}>
+              <Text style={[styles.rowText, r.indent && { paddingStart: 28, fontSize: 13 }]}>{r.name}</Text>
+              {r.count != null ? <Text style={styles.rowCount}>{`${r.count} منتج`}</Text> : null}
+              <Icon name="chevron-left" size={16} />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  )
+}
+
+/** Discover (design: "discover"): search, filter, then a coloured card per category. */
+export default function DiscoverScreen() {
+  const router = useRouter()
+  const [cards, setCards] = useState<Card[]>([])
+  const [open, setOpen] = useState<string | null>(null)
 
   useEffect(() => {
-    listCategories().then(setCats).catch(() => setCats([]))
-    listBrands().then(setBrands).catch(() => setBrands([]))
+    ;(async () => {
+      const [cats, brands, sample] = await Promise.all([
+        listAllCategories().catch(() => [] as Category[]),
+        listBrands().catch(() => [] as Brand[]),
+        listProducts({ limit: 20 }).catch(() => []),
+      ])
+      const tops = cats.filter((c) => !c.parent_category_id)
+      const list: Card[] = tops.map((c, i) => {
+        const subs = cats.filter((s) => s.parent_category_id === c.id)
+        return {
+          key: c.id,
+          title: c.name,
+          color: c.metadata?.color || FALLBACK_COLORS[i % FALLBACK_COLORS.length],
+          image: c.metadata?.image_url,
+          href: `/category/${c.id}`,
+          rows: [
+            ...subs.map((s) => ({ id: s.id, name: s.name, href: `/category/${s.id}` })),
+            { id: `${c.id}-all`, name: "كل المنتجات", href: `/category/${c.id}` },
+          ],
+        }
+      })
+      if (brands.length) {
+        list.push({
+          key: "brands",
+          title: "العلامات التجارية",
+          color: "#bcaeb0",
+          image: sample.find((p) => p.collection && p.thumbnail)?.thumbnail ?? undefined,
+          href: "/category/all",
+          rows: brands.map((b) => ({ id: b.id, name: b.title, href: `/brand/${b.id}` })),
+        })
+      }
+      setCards(list)
+      // "N items" next to every row
+      const counted = await Promise.all(
+        list.map(async (card) => ({
+          ...card,
+          rows: await Promise.all(
+            card.rows.map(async (r) => {
+              const isBrand = card.key === "brands"
+              const isAll = r.id.endsWith("-all")
+              const count = await countProducts(
+                isBrand ? { collectionId: r.id } : { categoryId: isAll ? card.key : r.id }
+              ).catch(() => undefined)
+              return { ...r, count }
+            })
+          ),
+        }))
+      )
+      setCards(counted)
+    })()
   }, [])
 
-  const submit = () => {
-    if (q.trim()) router.push({ pathname: "/category/[id]", params: { id: "all", q: q.trim() } })
-  }
-
   return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <View style={styles.searchBox}>
-        <Icon name="search" size={18} color={COLORS.muted} />
-        <TextInput
-          value={q}
-          onChangeText={setQ}
-          onSubmitEditing={submit}
-          returnKeyType="search"
-          autoFocus
-          placeholder="ابحثي عن منتج..."
-          placeholderTextColor={COLORS.muted}
-          style={styles.input}
-          testID="search-input"
-        />
-      </View>
-
-      {brands.length ? (
-        <>
-          <Text style={styles.title}>العلامات التجارية</Text>
-          <View style={styles.brands}>
-            {brands.map((b) => (
-              <Link key={b.id} href={`/brand/${b.id}`} asChild>
-                <Pressable style={styles.brand}>
-                  <Text style={styles.brandText}>{b.title}</Text>
-                </Pressable>
-              </Link>
-            ))}
-          </View>
-        </>
-      ) : null}
-
-      <Text style={styles.title}>تصفّحي الأقسام</Text>
-      {cats.map((c) => (
-        <Link key={c.id} href={`/category/${c.id}`} asChild>
-          <Pressable style={styles.row}>
-            <View style={styles.iconCircle}>
-              <CategoryIcon name={c.name} size={22} />
-            </View>
-            <Text style={styles.rowText}>{c.name}</Text>
-            <Icon name="chevron-left" size={18} color={COLORS.muted} />
-          </Pressable>
-        </Link>
-      ))}
-      <Link href="/category/all" asChild>
-        <Pressable style={styles.row}>
-          <View style={styles.iconCircle}>
-            <Icon name="grid" size={20} />
-          </View>
-          <Text style={styles.rowText}>كل المنتجات</Text>
-          <Icon name="chevron-left" size={18} color={COLORS.muted} />
-        </Pressable>
-      </Link>
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
+      <Header variant="menu" title="اكتشفي" />
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 30, gap: 18 }}>
+        <SearchBar onPress={() => router.push("/find")} onFilter={() => router.push({ pathname: "/category/[id]", params: { id: "all", filter: "1" } })} />
+        {cards.map((c) => (
+          <DiscoverCard
+            key={c.key}
+            card={c}
+            open={open === c.key}
+            onToggle={() => {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+              setOpen(open === c.key ? null : c.key)
+            }}
+          />
+        ))}
+      </ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  page: { padding: 20, gap: 12 },
-  searchBox: {
+  searchRow: { flexDirection: "row", gap: 12, marginBottom: 4 },
+  search: {
+    flex: 1,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#fff",
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: COLORS.soft,
-    borderRadius: RADIUS.pill,
-    paddingHorizontal: 16,
-    height: 46,
+    paddingHorizontal: 18,
+    ...SHADOW,
+    shadowOpacity: 0.08,
+    elevation: 3,
   },
-  input: {
-    flex: 1,
-    fontFamily: FONTS.regular,
-    fontSize: 15,
-    color: COLORS.text,
-    writingDirection: "rtl",
-    textAlign: Platform.OS === "web" ? "right" : "left",
-  },
-  title: { fontSize: 18, fontWeight: "700", marginTop: 10 },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.soft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rowText: { flex: 1, fontSize: 15, fontWeight: "500" },
-  brands: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  brand: { borderWidth: 1, borderColor: COLORS.border, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8 },
-  brandText: { fontSize: 13, fontWeight: "700" },
+  searchText: { color: "#8a8a8f", fontSize: 14 },
+  filterBtn: { width: 46, height: 46, borderRadius: 12, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", ...SHADOW, shadowOpacity: 0.08, elevation: 3 },
+  card: { height: 126, borderRadius: 10, flexDirection: "row", alignItems: "center", overflow: "hidden" },
+  cardTitle: { flex: 1, color: "#fff", fontSize: 18, fontWeight: "700", paddingHorizontal: 22 },
+  cardArt: { width: 150, height: "100%", alignItems: "center", justifyContent: "center" },
+  ringOuter: { position: "absolute", width: 126, height: 126, borderRadius: 63, backgroundColor: "rgba(255,255,255,0.12)" },
+  ringInner: { position: "absolute", width: 100, height: 100, borderRadius: 50, backgroundColor: "rgba(255,255,255,0.14)" },
+  cardImage: { width: 84, height: 84, borderRadius: 42 },
+  rows: { paddingHorizontal: 18, paddingTop: 6 },
+  row: { flexDirection: "row", alignItems: "center", gap: 10, height: 46, borderBottomWidth: 1, borderBottomColor: "#f0f0f0" },
+  rowText: { flex: 1, fontSize: 14 },
+  rowCount: { fontSize: 11, color: "#b5b5b9" },
 })

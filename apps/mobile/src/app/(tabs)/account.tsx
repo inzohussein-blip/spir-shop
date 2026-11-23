@@ -1,108 +1,79 @@
 import Constants from "expo-constants"
 import { useRouter } from "expo-router"
-import { Linking, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import Icon, { IconName } from "../../components/Icon"
 import Text from "../../components/Text"
-import { COLORS, RADIUS, SHADOW } from "../../lib/config"
+import { COLORS, SHADOW } from "../../lib/config"
 import { useStore } from "../../lib/store"
 
-/** Account (no sign-up needed): orders, address, wishlist, notifications, contact. */
+/** Profile (design: "profile"): avatar, name, settings cog, then one card with the account rows. */
 export default function AccountScreen() {
   const router = useRouter()
-  const { address, orderIds, wishlist, settings } = useStore()
+  const insets = useSafeAreaInsets()
+  const { address, addresses, orderIds, wishlist, deleteAddress } = useStore()
   const name = address ? `${address.firstName} ${address.lastName}`.trim() : "أهلاً بك"
   const initial = address?.firstName?.trim()?.[0] ?? "S"
 
+  const clearData = () => {
+    const go = async () => {
+      for (const a of addresses) await deleteAddress(a.id)
+    }
+    if (Platform.OS === "web") return go()
+    Alert.alert("مسح بياناتي", "راح ننسى اسمك وعناوينك على هذا الجهاز. طلباتك تبقى محفوظة بالمتجر.", [
+      { text: "إلغاء", style: "cancel" },
+      { text: "مسح", style: "destructive", onPress: go },
+    ])
+  }
+
   const rows: { icon: IconName; label: string; hint?: string; onPress: () => void; testID?: string }[] = [
+    { icon: "map-pin", label: "عنوان التوصيل", hint: address?.label, onPress: () => router.push("/address"), testID: "account-address" },
     { icon: "package", label: "طلباتي", hint: orderIds.length ? String(orderIds.length) : undefined, onPress: () => router.push("/orders"), testID: "account-orders" },
-    { icon: "map-pin", label: "عنوان التوصيل", hint: address?.province, onPress: () => router.push("/address"), testID: "account-address" },
-    { icon: "heart", label: "المفضلة", hint: wishlist.length ? String(wishlist.length) : undefined, onPress: () => router.push("/wishlist") },
-    { icon: "bell", label: "الإشعارات", onPress: () => router.push("/notifications") },
+    { icon: "credit-card", label: "طريقة الدفع", hint: "عند الاستلام", onPress: () => router.push("/about") },
+    { icon: "heart", label: "المفضلة", hint: wishlist.length ? String(wishlist.length) : undefined, onPress: () => router.push("/wishlist"), testID: "account-wishlist" },
+    { icon: "star", label: "قيّمي التطبيق", onPress: () => router.push("/feedback"), testID: "account-feedback" },
+    { icon: "log-out", label: "مسح بياناتي من الجهاز", onPress: clearData },
   ]
 
-  const contact: { icon: IconName; label: string; url: string }[] = [
-    settings.whatsapp_number ? { icon: "message-circle", label: "واتساب", url: `https://wa.me/${settings.whatsapp_number.replace(/\D/g, "")}` } : null,
-    settings.telegram_username ? { icon: "send", label: "تلكرام", url: `https://t.me/${settings.telegram_username.replace(/^@/, "")}` } : null,
-    settings.support_phone ? { icon: "phone", label: "اتصال", url: `tel:${settings.support_phone}` } : null,
-  ].filter((x): x is { icon: IconName; label: string; url: string } => !!x)
-
   return (
-    <ScrollView style={{ backgroundColor: COLORS.bg }} contentContainerStyle={{ padding: 20, gap: 18 }}>
+    <ScrollView style={{ backgroundColor: COLORS.bg }} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: insets.top + 50, paddingBottom: 30, gap: 40 }}>
       <View style={styles.profile}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, gap: 6 }}>
           <Text style={styles.name}>{name}</Text>
-          <Text style={styles.sub}>{address?.phone || "بدون حساب: بياناتك محفوظة على جهازك"}</Text>
+          <Text style={styles.sub}>{address?.phone || "بياناتك محفوظة على جهازك"}</Text>
         </View>
-        <Pressable onPress={() => router.push("/server")} hitSlop={10} accessibilityLabel="الإعدادات">
-          <Icon name="settings" size={20} color={COLORS.muted} />
+        <Pressable onPress={() => router.push("/settings")} hitSlop={10} accessibilityLabel="الإعدادات" testID="open-settings">
+          <Icon name="settings" size={22} color={COLORS.primaryDark} />
         </Pressable>
       </View>
 
       <View style={styles.card}>
         {rows.map((r, i) => (
           <Pressable key={r.label} style={[styles.row, i === rows.length - 1 && { borderBottomWidth: 0 }]} onPress={r.onPress} testID={r.testID}>
-            <Icon name={r.icon} size={20} color={COLORS.muted} />
+            <Icon name={r.icon} size={19} color="#a7a9b7" />
             <Text style={styles.rowText}>{r.label}</Text>
             {r.hint ? <Text style={styles.hint}>{r.hint}</Text> : null}
-            <Icon name="chevron-left" size={18} color={COLORS.muted} />
+            <Icon name="chevron-left" size={20} />
           </Pressable>
         ))}
       </View>
-
-      {contact.length ? (
-        <View style={{ gap: 10 }}>
-          <Text style={styles.section}>تواصلي معنا</Text>
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            {contact.map((c) => (
-              <Pressable key={c.label} style={styles.contact} onPress={() => Linking.openURL(c.url)}>
-                <Icon name={c.icon} size={20} color={COLORS.accent} />
-                <Text style={{ fontSize: 13, fontWeight: "700" }}>{c.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      ) : null}
-
       <Text style={styles.version}>Spir Shop {Constants.expoConfig?.version ?? ""}</Text>
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  profile: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 8 },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: COLORS.soft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: { fontSize: 24, fontWeight: "700" },
-  name: { fontSize: 18, fontWeight: "700" },
-  sub: { fontSize: 12, color: COLORS.muted },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: RADIUS.card,
-    paddingHorizontal: 16,
-    borderWidth: 0.5,
-    borderColor: "#f3f3f3",
-    ...SHADOW,
-  },
-  row: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 17, borderBottomWidth: 1, borderBottomColor: "#f3f3f3" },
+  profile: { flexDirection: "row", alignItems: "center", gap: 18 },
+  avatar: { width: 70, height: 70, borderRadius: 35, backgroundColor: "#f2a1a1", alignItems: "center", justifyContent: "center" },
+  avatarText: { color: "#fff", fontSize: 28, fontWeight: "700" },
+  name: { fontSize: 17, fontWeight: "700" },
+  sub: { fontSize: 12, color: COLORS.text, textAlign: "left" },
+  card: { backgroundColor: "#fff", borderRadius: 16, paddingHorizontal: 10, borderWidth: 1, borderColor: "#f2f2f2", ...SHADOW, shadowOpacity: 0.08, elevation: 3 },
+  row: { flexDirection: "row", alignItems: "center", gap: 14, height: 70, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: "#f2f2f2" },
   rowText: { flex: 1, fontSize: 15, fontWeight: "500" },
-  hint: { fontSize: 13, color: COLORS.muted },
-  section: { fontSize: 16, fontWeight: "700" },
-  contact: {
-    flex: 1,
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: COLORS.surface,
-  },
-  version: { textAlign: "center", color: "#c4c4c4", fontSize: 12, marginTop: 10 },
+  hint: { fontSize: 12, color: COLORS.muted },
+  version: { textAlign: "center", fontSize: 11, color: "#c4c4c4" },
 })

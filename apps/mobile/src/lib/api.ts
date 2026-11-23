@@ -85,7 +85,14 @@ export type Product = {
   /** metadata.swatches maps an option value to a color, e.g. { "Rose Nude": "#c48a7f" } */
   metadata?: { swatches?: Record<string, string> } | null
 }
-export type Category = { id: string; name: string; handle: string; parent_category_id: string | null }
+export type Category = {
+  id: string
+  name: string
+  handle: string
+  parent_category_id: string | null
+  /** color + image_url drive the "Discover" cards (set in the admin, category metadata) */
+  metadata?: { color?: string; image_url?: string } | null
+}
 export type LineItem = {
   id: string
   title: string
@@ -147,6 +154,22 @@ export async function getProduct(handle: string) {
   const region = await getRegionId()
   const qs = new URLSearchParams({ region_id: region, fields: PRODUCT_FIELDS, handle })
   return (await storeFetch<{ products: Product[] }>(`/products?${qs}`)).products[0] ?? null
+}
+
+/** Every category (top level and sub-categories) with its metadata. */
+export async function listAllCategories() {
+  const { product_categories } = await storeFetch<{ product_categories: Category[] }>(
+    "/product-categories?fields=id,name,handle,parent_category_id,metadata&limit=100"
+  )
+  return product_categories
+}
+
+/** Number of products in a category (for the "N items" labels). */
+export async function countProducts(params: { categoryId?: string; collectionId?: string }) {
+  const qs = new URLSearchParams({ limit: "1", fields: "id" })
+  if (params.categoryId) qs.append("category_id[]", params.categoryId)
+  if (params.collectionId) qs.append("collection_id[]", params.collectionId)
+  return (await storeFetch<{ count: number }>(`/products?${qs}`)).count
 }
 
 export async function listCategories() {
@@ -218,12 +241,20 @@ export const getRatings = async (productIds: string[]) =>
   (await storeFetch<{ ratings: Record<string, Rating> }>(`/app-reviews/summary?product_ids=${productIds.join(",")}`))
     .ratings
 
-export type Review = { id: string; rating: number; name: string; comment: string | null; created_at: string }
+export type Review = { id: string; rating: number; name: string; comment: string | null; created_at: string; images?: string[] | null }
 export type ReviewSummary = { average: number; count: number; distribution: { star: number; count: number }[] }
 export const getReviews = (productId: string) =>
   storeFetch<{ summary: ReviewSummary; reviews: Review[] }>(`/app-reviews?product_id=${productId}`)
-export const createReview = (body: { product_id: string; order_id: string; rating: number; name: string; comment?: string }) =>
+export const createReview = (body: { product_id: string; order_id: string; rating: number; name: string; comment?: string; images?: string[] }) =>
   storeFetch("/app-reviews", { method: "POST", body })
+
+/** Upload review photos (base64). Allowed only with the id of an order placed from this device. */
+export const uploadImages = async (orderId: string, files: { filename: string; mime_type: string; content: string }[]) =>
+  (await storeFetch<{ urls: string[] }>("/app-uploads", { method: "POST", body: { order_id: orderId, files } })).urls
+
+/** "Rate this app" feedback (sent to the staff Telegram chat). */
+export const sendFeedback = (body: { rating: number; comment?: string; name?: string; phone?: string }) =>
+  storeFetch("/app-feedback", { method: "POST", body })
 
 /* --------------------------------- orders --------------------------------- */
 

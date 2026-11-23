@@ -1,18 +1,17 @@
 import { View } from "react-native"
+import { COLORS } from "../lib/config"
 import Text from "./Text"
 
-const GOLD = "#e2a93b"
-
-/** Read-only star rating, e.g. 4.5 -> four full stars and one half-dim star. */
-export default function Stars({ value, size = 12, count }: { value: number; size?: number; count?: number }) {
+/** Read-only star rating in the design's green, e.g. 4.4 -> ★★★★☆ (count). */
+export default function Stars({ value, size = 12, count, gap = 1 }: { value: number; size?: number; count?: number; gap?: number }) {
   const full = Math.round(value)
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-      <Text style={{ fontSize: size, color: GOLD, letterSpacing: 1 }}>
+      <Text style={{ fontSize: size, color: COLORS.accent, letterSpacing: gap, lineHeight: size * 1.3 }}>
         {"★".repeat(full)}
-        <Text style={{ fontSize: size, color: "#d9d9d9" }}>{"★".repeat(5 - full)}</Text>
+        <Text style={{ fontSize: size, color: "#d3d6da" }}>{"★".repeat(5 - full)}</Text>
       </Text>
-      {count != null ? <Text style={{ fontSize: size - 1, color: "#8a8a8f" }}>({count})</Text> : null}
+      {count != null ? <Text style={{ fontSize: Math.max(9, size - 2), color: COLORS.muted }}>({count})</Text> : null}
     </View>
   )
 }

@@ -27,8 +27,13 @@ export function CategoryIcon({ name, color = COLORS.text, size = 22 }: { name: s
 }
 
 /** Wishlist heart: filled red when saved. */
-export function HeartIcon({ filled, size = 16, color = COLORS.text }: { filled: boolean; size?: number; color?: string }) {
+export function HeartIcon({ filled, size = 16, color = COLORS.text, solid }: { filled: boolean; size?: number; color?: string; solid?: boolean }) {
+  // solid: grey filled heart when not saved (design's product tiles), outline otherwise
   return (
-    <MaterialCommunityIcons name={filled ? "heart" : "heart-outline"} size={size} color={filled ? COLORS.danger : color} />
+    <MaterialCommunityIcons
+      name={filled || solid ? "heart" : "heart-outline"}
+      size={size}
+      color={filled ? "#ff6464" : color}
+    />
   )
 }

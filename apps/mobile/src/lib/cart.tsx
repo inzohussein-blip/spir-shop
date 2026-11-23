@@ -3,6 +3,19 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 import { Cart, getRegionId, Order, ShippingOption, storeFetch } from "./api"
 
 const CART_KEY = "spir_cart_id"
+const SAVED_KEY = "spir_cart_saved"
+
+/** A cart line the customer unticked: kept on the device, not part of the order. */
+export type SavedLine = {
+  variant_id: string
+  product_id?: string
+  quantity: number
+  title: string
+  product_title?: string | null
+  variant_title?: string | null
+  thumbnail: string | null
+  unit_price: number
+}
 const CART_FIELDS =
   "fields=*items,+items.thumbnail,+items.product_id,+shipping_methods.shipping_option_id,*promotions,+discount_total,+item_total,+item_subtotal"
 
@@ -28,6 +41,10 @@ type CartContextValue = {
   applyPromo: (code: string) => Promise<void>
   removePromo: (code: string) => Promise<void>
   placeOrder: (input: CheckoutInput) => Promise<Order>
+  /** unticked lines (design: cart checkboxes) */
+  saved: SavedLine[]
+  untick: (lineId: string) => Promise<void>
+  tick: (variantId: string) => Promise<void>
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
@@ -35,6 +52,17 @@ const CartContext = createContext<CartContextValue | null>(null)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(false)
+  const [saved, setSaved] = useState<SavedLine[]>([])
+
+  useEffect(() => {
+    AsyncStorage.getItem(SAVED_KEY)
+      .then((v) => v && setSaved(JSON.parse(v)))
+      .catch(() => undefined)
+  }, [])
+  const storeSaved = (list: SavedLine[]) => {
+    setSaved(list)
+    AsyncStorage.setItem(SAVED_KEY, JSON.stringify(list)).catch(() => undefined)
+  }
 
   const loadCart = useCallback(async (id: string) => {
     try {
@@ -158,11 +186,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return result.order
     })
 
+  /** Untick: take the line out of the cart but keep it on screen to tick again later. */
+  const untick = (lineId: string) =>
+    run(async () => {
+      if (!cart) return
+      const line = cart.items.find((i) => i.id === lineId)
+      if (!line?.variant_id) return
+      await storeFetch(`/carts/${cart.id}/line-items/${lineId}`, { method: "DELETE" })
+      storeSaved([
+        {
+          variant_id: line.variant_id,
+          product_id: line.product_id,
+          quantity: line.quantity,
+          title: line.title,
+          product_title: line.product_title,
+          variant_title: line.variant_title,
+          thumbnail: line.thumbnail,
+          unit_price: line.unit_price,
+        },
+        ...saved.filter((s) => s.variant_id !== line.variant_id),
+      ])
+      await loadCart(cart.id)
+    })
+
+  const tick = (variantId: string) =>
+    run(async () => {
+      const line = saved.find((s) => s.variant_id === variantId)
+      if (!line) return
+      const id = await ensureCart()
+      await storeFetch(`/carts/${id}/line-items`, { method: "POST", body: { variant_id: variantId, quantity: line.quantity } })
+      storeSaved(saved.filter((s) => s.variant_id !== variantId))
+      await loadCart(id)
+    })
+
   const count = cart?.items?.reduce((n, i) => n + i.quantity, 0) ?? 0
 
   return (
     <CartContext.Provider
-      value={{ cart, count, loading, addItem, updateItem, removeItem, listShippingOptions, applyPromo, removePromo, placeOrder }}
+      value={{ cart, count, loading, addItem, updateItem, removeItem, listShippingOptions, applyPromo, removePromo, placeOrder, saved, untick, tick }}
     >
       {children}
     </CartContext.Provider>

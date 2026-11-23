@@ -2,6 +2,7 @@ import { reloadAppAsync } from "expo"
 import { useState } from "react"
 import { Platform, StyleSheet, TextInput, View } from "react-native"
 import Button from "../components/Button"
+import Header from "../components/Header"
 import Text from "../components/Text"
 import { COLORS, DEFAULT_BACKEND_URL, FONTS, getBackendUrl, saveBackendUrl } from "../lib/config"
 
@@ -35,6 +36,8 @@ export default function ServerSettings() {
   }
 
   return (
+    <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
+    <Header title="إعدادات الخادم" />
     <View style={styles.page}>
       <Text style={styles.label}>عنوان الخادم</Text>
       <TextInput
@@ -53,6 +56,7 @@ export default function ServerSettings() {
       <Button label="اختبار الاتصال" variant="outline" onPress={test} loading={busy} />
       <Button label="حفظ وإعادة التشغيل" onPress={() => save(url)} testID="server-save" />
       <Button label="الرجوع للعنوان الافتراضي" variant="outline" onPress={() => save(null)} />
+    </View>
     </View>
   )
 }

@@ -60,6 +60,30 @@ export const CreateReviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   name: z.string().min(1).max(60),
   comment: z.string().max(1000).nullable().optional(),
+  images: z.array(z.string().url().max(500)).max(4).optional(),
+})
+
+/** Photos sent from the app (base64), e.g. with a review. Only for an existing order. */
+export const AppUploadSchema = z.object({
+  order_id: z.string().min(1).max(100),
+  files: z
+    .array(
+      z.object({
+        filename: z.string().min(1).max(120),
+        mime_type: z.enum(["image/jpeg", "image/png", "image/webp"]),
+        content: z.string().min(1).max(4_000_000),
+      })
+    )
+    .min(1)
+    .max(4),
+})
+
+/** "Rate this app" feedback from the app. */
+export const AppFeedbackSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).optional(),
+  name: z.string().max(60).optional(),
+  phone: z.string().max(30).optional(),
 })
 
 export const UpdateReviewSchema = z.object({ status: z.enum(["approved", "hidden"]) })
@@ -74,3 +98,5 @@ export type RegisterPushTokenBody = z.infer<typeof RegisterPushTokenSchema>
 export type SaveAppSettingsBody = z.infer<typeof SaveAppSettingsSchema>
 export type CreateReviewBody = z.infer<typeof CreateReviewSchema>
 export type UpdateReviewBody = z.infer<typeof UpdateReviewSchema>
+export type AppUploadBody = z.infer<typeof AppUploadSchema>
+export type AppFeedbackBody = z.infer<typeof AppFeedbackSchema>

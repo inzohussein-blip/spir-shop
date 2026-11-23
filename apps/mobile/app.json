@@ -72,7 +72,15 @@
           }
         }
       ],
-      "./plugins/with-release-signing"
+      "./plugins/with-release-signing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "نحتاج الوصول للصور حتى تضيفين صور مع تقييمك",
+          "cameraPermission": "نحتاج الكاميرا حتى تصورين المنتج مع تقييمك",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false

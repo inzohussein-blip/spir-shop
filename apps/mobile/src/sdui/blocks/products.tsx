@@ -46,20 +46,25 @@ const seeAllHref = (props: Record<string, unknown>) =>
     ? `/category/${str(props.category_id)}`
     : "/category/all"
 
+/** Horizontal slider: tall cards ("featured", default) or small side-by-side cards ("compact"). */
 export function ProductCarousel({ props }: BlockProps) {
   const products = useBlockProducts(props)
+  const compact = str(props.style) === "compact"
   if (products && !products.length) return null
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 16 }}>
       <SectionTitle title={str(props.title)} href={seeAllHref(props)} />
       {!products ? (
         <ActivityIndicator color={COLORS.primary} />
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -20 }}
+          contentContainerStyle={{ gap: compact ? 14 : 16, paddingHorizontal: 20, paddingVertical: compact ? 4 : 0 }}
+        >
           {products.map((p) => (
-            <View key={p.id} style={{ width: 140 }}>
-              <ProductCard product={p} />
-            </View>
+            <ProductCard key={p.id} product={p} variant={compact ? "compact" : "featured"} />
           ))}
         </ScrollView>
       )}
@@ -73,8 +78,10 @@ export function ProductGrid({ props }: BlockProps) {
   const rows: Product[][] = []
   for (let i = 0; i < (products?.length ?? 0); i += 2) rows.push(products!.slice(i, i + 2))
   return (
-    <View style={{ gap: 6 }}>
-      <SectionTitle title={str(props.title)} />
+    <View style={{ gap: 6, marginHorizontal: -8 }}>
+      <View style={{ paddingHorizontal: 8 }}>
+        <SectionTitle title={str(props.title)} />
+      </View>
       {!products ? (
         <ActivityIndicator color={COLORS.primary} />
       ) : (
@@ -91,7 +98,7 @@ export function ProductGrid({ props }: BlockProps) {
   )
 }
 
-/** Round icon per category with its name underneath (top of the home screen in the design). */
+/** Row of round category icons with names underneath (top of the home screen in the design). */
 export function CategoryChips({ props }: BlockProps) {
   const [cats, setCats] = useState<Category[]>([])
   useEffect(() => {
@@ -101,14 +108,16 @@ export function CategoryChips({ props }: BlockProps) {
   return (
     <View style={{ gap: 12 }}>
       <SectionTitle title={str(props.title)} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 18, paddingHorizontal: 4 }}>
-        {cats.map((c) => (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 2, paddingHorizontal: 18 }}>
+        {cats.map((c, i) => (
           <Link key={c.id} href={`/category/${c.id}`} asChild>
             <Pressable style={styles.cat} testID={`category-${c.id}`}>
-              <View style={styles.catCircle}>
-                <CategoryIcon name={c.name} size={24} />
+              <View style={[styles.catRing, i === 0 && styles.catRingActive]}>
+                <View style={[styles.catCircle, i === 0 && styles.catCircleActive]}>
+                  <CategoryIcon name={c.name} size={21} color={i === 0 ? "#fff" : "#8a8a8f"} />
+                </View>
               </View>
-              <Text style={styles.catText} numberOfLines={2}>
+              <Text style={[styles.catText, i === 0 && { color: COLORS.primaryDark }]} numberOfLines={1}>
                 {c.name}
               </Text>
             </Pressable>
@@ -120,17 +129,13 @@ export function CategoryChips({ props }: BlockProps) {
 }
 
 const styles = StyleSheet.create({
-  titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 4 },
-  title: { fontSize: 20, fontWeight: "700" },
-  more: { color: COLORS.muted, fontSize: 13 },
-  cat: { alignItems: "center", width: 64, gap: 6 },
-  catCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.soft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  catText: { fontSize: 11, color: COLORS.muted, textAlign: "center" },
+  titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  title: { fontSize: 20, fontWeight: "700", color: COLORS.primaryDark },
+  more: { color: "#9b9b9b", fontSize: 13 },
+  cat: { alignItems: "center", width: 68, gap: 8 },
+  catRing: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  catRingActive: { borderWidth: 1.5, borderColor: "#3a2c27" },
+  catCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#f3f3f3", alignItems: "center", justifyContent: "center" },
+  catCircleActive: { backgroundColor: "#3a2c27" },
+  catText: { fontSize: 11, color: "#9b9b9b", textAlign: "center" },
 })

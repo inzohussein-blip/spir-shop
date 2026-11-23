@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router"
 import { useEffect, useState } from "react"
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from "react-native"
+import Header from "../components/Header"
 import Icon from "../components/Icon"
 import Text from "../components/Text"
 import { AppNotification, getNotifications } from "../lib/api"
@@ -24,14 +25,17 @@ export default function NotificationsScreen() {
       .catch(() => setItems([]))
   }, [address?.province, markNotificationsSeen])
 
-  if (!items) return <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
-
   return (
+    <View style={{ flex: 1, backgroundColor: "#fafafa" }}>
+      <Header title="الإشعارات" />
+      {!items ? (
+        <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
+      ) : (
     <FlatList
       style={{ backgroundColor: "#f9f9f9" }}
       data={items}
       keyExtractor={(n) => n.id}
-      contentContainerStyle={{ padding: 20, gap: 14 }}
+      contentContainerStyle={{ paddingHorizontal: 30, paddingTop: 14, paddingBottom: 30, gap: 30 }}
       ListEmptyComponent={
         <View style={{ alignItems: "center", marginTop: 60, gap: 10 }}>
           <Icon name="bell" size={36} color={COLORS.muted} />
@@ -47,18 +51,19 @@ export default function NotificationsScreen() {
               {isNew ? <View style={styles.dot} /> : null}
             </View>
             <Text style={styles.body}>{item.body}</Text>
-            <Text style={styles.date}>{new Date(item.sent_at).toLocaleDateString("ar-IQ")}</Text>
           </Pressable>
         )
       }}
     />
+      )}
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: "#fff", borderRadius: RADIUS.card - 6, padding: 16, gap: 6, ...SHADOW },
-  title: { fontSize: 15, fontWeight: "700" },
-  body: { fontSize: 13, color: COLORS.muted, lineHeight: 20 },
+  card: { backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 22, paddingVertical: 20, gap: 8, borderWidth: 1, borderColor: "#f0f0f0", ...SHADOW, shadowOpacity: 0.04 },
+  title: { fontSize: 15, fontWeight: "500" },
+  body: { fontSize: 13, color: "#6b6b6b", lineHeight: 21 },
   date: { fontSize: 11, color: "#c4c4c4" },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.danger },
 })

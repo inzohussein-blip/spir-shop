@@ -12,7 +12,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const svc = req.scope.resolve<AppContentModuleService>(APP_CONTENT_MODULE)
   const reviews = await svc.listProductReviews(
     { product_id: productId, status: "approved" },
-    { order: { created_at: "DESC" }, take: 200, select: ["id", "rating", "name", "comment", "created_at"] }
+    { order: { created_at: "DESC" }, take: 200, select: ["id", "rating", "name", "comment", "images", "created_at"] }
   )
   const distribution = [5, 4, 3, 2, 1].map((star) => ({ star, count: reviews.filter((r) => r.rating === star).length }))
   const average = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0

@@ -3,6 +3,8 @@ import {
   CreateStorySchema,
   PublishLayoutSchema,
   CreateReviewSchema,
+  AppUploadSchema,
+  AppFeedbackSchema,
   RegisterPushTokenSchema,
   RollbackLayoutSchema,
   SaveAppSettingsSchema,
@@ -75,6 +77,18 @@ export default defineMiddlewares({
       methods: ["POST"],
       matcher: "/store/app-reviews",
       middlewares: [validateAndTransformBody(CreateReviewSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/store/app-uploads",
+      // up to 4 photos of ~3MB each, base64 encoded
+      bodyParser: { sizeLimit: "18mb" },
+      middlewares: [validateAndTransformBody(AppUploadSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/store/app-feedback",
+      middlewares: [validateAndTransformBody(AppFeedbackSchema)],
     },
     {
       methods: ["POST"],

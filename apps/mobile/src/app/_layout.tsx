@@ -8,7 +8,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context"
 import UpdatePrompts from "../components/UpdatePrompts"
 import { CartProvider, useCart } from "../lib/cart"
 import { StoreProvider } from "../lib/store"
-import { COLORS, FONTS, loadBackendUrl } from "../lib/config"
+import { COLORS, loadBackendUrl } from "../lib/config"
+import { DrawerProvider } from "../lib/drawer"
 import { openLink } from "../lib/links"
 import { syncPushToken } from "../lib/push"
 
@@ -55,33 +56,14 @@ export default function RootLayout() {
         <View style={{ flex: 1, backgroundColor: COLORS.bg }} {...({ dir: "rtl" } as object)}>
           <StatusBar style="dark" />
           <PushBridge />
-          <Stack
-            screenOptions={{
-              headerTitleAlign: "center",
-              headerTintColor: COLORS.primaryDark,
-              headerTitleStyle: { fontFamily: FONTS.bold, fontSize: 18 },
-              headerShadowVisible: false,
-              headerBackTitle: "رجوع",
-              contentStyle: { backgroundColor: COLORS.bg },
-            }}
-          >
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="product/[handle]" options={{ headerShown: false }} />
-            <Stack.Screen name="category/[id]" options={{ title: "" }} />
-            <Stack.Screen name="brand/[id]" options={{ title: "" }} />
-            <Stack.Screen
-              name="stories"
-              options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }}
-            />
-            <Stack.Screen name="checkout" options={{ title: "إتمام الطلب" }} />
-            <Stack.Screen name="server" options={{ title: "إعدادات الخادم" }} />
-            <Stack.Screen name="orders/index" options={{ title: "طلباتي" }} />
-            <Stack.Screen name="orders/[id]" options={{ title: "تتبع الطلب" }} />
-            <Stack.Screen name="rate" options={{ title: "تقييم المنتج" }} />
-            <Stack.Screen name="address" options={{ title: "عنوان التوصيل" }} />
-            <Stack.Screen name="notifications" options={{ title: "الإشعارات" }} />
-            <Stack.Screen name="order/[id]" options={{ title: "تم الطلب", headerBackVisible: false }} />
-          </Stack>
+          <DrawerProvider>
+            {/* Every screen draws its own header (components/Header) to match the design */}
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.bg } }}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="stories" options={{ presentation: "fullScreenModal", animation: "fade" }} />
+              <Stack.Screen name="order/[id]" options={{ gestureEnabled: false }} />
+            </Stack>
+          </DrawerProvider>
           <UpdatePrompts />
         </View>
       </CartProvider>

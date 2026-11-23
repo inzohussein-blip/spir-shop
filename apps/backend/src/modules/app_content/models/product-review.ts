@@ -12,6 +12,8 @@ const ProductReview = model
     rating: model.number(),
     name: model.text(),
     comment: model.text().nullable(),
+    /** photo URLs uploaded with the review */
+    images: model.json().nullable(),
     status: model.enum(["approved", "hidden"]).default("approved"),
   })
   .indexes([{ on: ["order_id", "product_id"], unique: true }])

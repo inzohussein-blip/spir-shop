@@ -37,8 +37,10 @@ export function HeroBanner({ props }: BlockProps) {
 }
 
 export function Heading({ props }: BlockProps) {
+  const router = useRouter()
   const align = str(props.align, "start")
-  return (
+  const link = str(props.link)
+  const text = (
     <Text
       style={[
         styles.heading,
@@ -48,6 +50,16 @@ export function Heading({ props }: BlockProps) {
     >
       {str(props.text)}
     </Text>
+  )
+  if (!link) return text
+  // Section title with "View all" (design: "Top Collection   Show all")
+  return (
+    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: -12 }}>
+      {text}
+      <Pressable onPress={() => openLink(router, link)} hitSlop={8}>
+        <Text style={{ color: "#9b9b9b", fontSize: 13 }}>عرض الكل</Text>
+      </Pressable>
+    </View>
   )
 }
 
@@ -103,7 +115,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   ctaText: { color: COLORS.text, fontWeight: "700", fontSize: 13 },
-  heading: { fontWeight: "700", color: COLORS.text, paddingHorizontal: 4 },
+  heading: { fontWeight: "700", color: COLORS.text },
   offer: { borderRadius: 12, padding: 18, flexDirection: "row", alignItems: "center", gap: 12 },
   offerTitle: { color: "#fff", fontWeight: "700", fontSize: 17 },
   offerSub: { color: "#fff", opacity: 0.9 },

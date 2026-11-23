@@ -19,6 +19,8 @@ export const APP_BLOCK_TYPES = [
   "product_grid",
   "countdown_offer",
   "video_banner",
+  "collection_banner",
+  "collection_pair",
   "heading",
   "spacer",
 ] as const
@@ -35,35 +37,29 @@ export const AppLayoutBlocksSchema = z.array(AppBlockSchema).max(100)
 
 export type AppBlock = z.infer<typeof AppBlockSchema>
 
-/** Layout used until the merchant publishes their first design. */
+/** Layout used until the merchant publishes their first design (section order of the design's home page). */
 export const DEFAULT_HOME_BLOCKS: AppBlock[] = [
-  { id: "stories", type: "story_bar", props: {} },
+  { id: "categories", type: "category_chips", props: { title: "" } },
   {
     id: "hero",
-    type: "hero_banner",
+    type: "hero_carousel",
     props: {
-      title: "جمالك يبدأ من العناية",
-      subtitle: "توصيل لكل المحافظات - الدفع عند الاستلام",
-      cta_label: "تسوقي الآن",
-      link: "/category/all",
-      background_color: "#f3f3f3",
-      text_color: "#1d1f22",
-      image_url: "",
+      slides: [{ title: "تشكيلة العناية الجديدة", subtitle: "", image_url: "", link: "/category/all", background_color: "#c9b8a8", text_color: "#ffffff" }],
+      interval: 5,
     },
   },
-  { id: "trust", type: "trust_strip", props: {} },
-  { id: "deals", type: "flash_sale", props: { title: "عروض اليوم" } },
-  { id: "categories", type: "category_chips", props: { title: "الأقسام" } },
-  { id: "brands", type: "brand_strip", props: { title: "العلامات التجارية" } },
+  { id: "featured", type: "product_carousel", props: { title: "منتجات مميزة", source: "all", limit: 8 } },
   {
-    id: "best",
-    type: "product_carousel",
-    props: { title: "الأكثر طلباً", source: "all", limit: 8 },
+    id: "new-collection",
+    type: "collection_banner",
+    props: { variant: "wide", label: "تشكيلة جديدة", title: "جمالك\nبكل مناسبة", image_url: "", link: "/category/all" },
   },
+  { id: "recommended", type: "product_carousel", props: { title: "مقترحة لكِ", source: "all", limit: 8, style: "compact" } },
+  { id: "top-title", type: "heading", props: { text: "أفضل التشكيلات", size: 20, link: "/search" } },
   {
-    id: "all",
-    type: "product_grid",
-    props: { title: "كل المنتجات", source: "all", limit: 20 },
+    id: "top-1",
+    type: "collection_banner",
+    props: { variant: "card", label: "خصومات لغاية 40%", title: "للبشرة\nالنضرة", image_url: "", link: "/category/all?sale=1" },
   },
 ]
 

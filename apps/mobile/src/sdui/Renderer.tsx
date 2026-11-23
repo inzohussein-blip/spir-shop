@@ -6,6 +6,7 @@ import { CategoryChips, ProductCarousel, ProductGrid } from "./blocks/products"
 import { StoryBar, VideoBanner } from "./blocks/media"
 import { BrandStrip } from "./blocks/brands"
 import { FlashSale, HeroCarousel, TrustStrip } from "./blocks/commerce"
+import { CollectionBanner, CollectionPair } from "./blocks/collections"
 import type { BlockProps } from "./types"
 
 /**
@@ -25,6 +26,8 @@ const REGISTRY: Record<string, ComponentType<BlockProps>> = {
   product_grid: ProductGrid,
   countdown_offer: CountdownOffer,
   video_banner: VideoBanner,
+  collection_banner: CollectionBanner,
+  collection_pair: CollectionPair,
   heading: Heading,
   spacer: Spacer,
 }
@@ -42,7 +45,7 @@ class BlockBoundary extends Component<{ children: ReactNode }, { failed: boolean
 
 export default function BlockRenderer({ blocks }: { blocks: Block[] }) {
   return (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: 28 }}>
       {blocks.map((block) => {
         const Comp = REGISTRY[block.type]
         if (!Comp) return null

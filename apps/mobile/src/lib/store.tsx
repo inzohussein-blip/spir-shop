@@ -21,8 +21,13 @@ export type SavedAddress = {
   email?: string
 }
 
+/** One of the customer's delivery addresses (home, work, ...). */
+export type AddressEntry = SavedAddress & { id: string; label: string }
+
 const KEYS = {
   address: "spir_address",
+  addresses: "spir_addresses",
+  selectedAddress: "spir_address_selected",
   wishlist: "spir_wishlist",
   orders: "spir_orders",
   notificationsSeen: "spir_notifications_seen",
@@ -39,8 +44,14 @@ const DEFAULT_SETTINGS: AppSettings = {
 }
 
 type StoreValue = {
-  address: SavedAddress | null
+  /** the selected delivery address */
+  address: AddressEntry | null
+  /** save into the selected address (or create the first one) */
   saveAddress: (a: SavedAddress) => Promise<void>
+  addresses: AddressEntry[]
+  upsertAddress: (a: SavedAddress & { id?: string; label: string }) => Promise<string>
+  deleteAddress: (id: string) => Promise<void>
+  selectAddress: (id: string) => Promise<void>
   wishlist: string[]
   isWished: (productId: string) => boolean
   toggleWish: (productId: string) => void
@@ -66,7 +77,8 @@ async function readJson<T>(key: string, fallback: T): Promise<T> {
 const writeJson = (key: string, value: unknown) => AsyncStorage.setItem(key, JSON.stringify(value)).catch(() => undefined)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [address, setAddress] = useState<SavedAddress | null>(null)
+  const [addresses, setAddresses] = useState<AddressEntry[]>([])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [wishlist, setWishlist] = useState<string[]>([])
   const [orderIds, setOrderIds] = useState<string[]>([])
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
@@ -77,18 +89,71 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    readJson<SavedAddress | null>(KEYS.address, null).then(setAddress)
+    ;(async () => {
+      let list = await readJson<AddressEntry[]>(KEYS.addresses, [])
+      let sel = await readJson<string | null>(KEYS.selectedAddress, null)
+      if (!list.length) {
+        // address saved by app versions before 1.3 (a single address)
+        const old = await readJson<SavedAddress | null>(KEYS.address, null)
+        if (old) {
+          list = [{ ...old, id: "a1", label: "البيت" }]
+          sel = "a1"
+          writeJson(KEYS.addresses, list)
+          writeJson(KEYS.selectedAddress, sel)
+        }
+      }
+      setAddresses(list)
+      setSelectedId(sel ?? list[0]?.id ?? null)
+    })()
     readJson<string[]>(KEYS.wishlist, []).then(setWishlist)
     readJson<string[]>(KEYS.orders, []).then(setOrderIds)
     readJson<number>(KEYS.notificationsSeen, 0).then(setSeenAt)
     getAppSettings().then(setSettings).catch(() => undefined)
   }, [])
 
-  const saveAddress = useCallback(async (a: SavedAddress) => {
-    setAddress(a)
-    await writeJson(KEYS.address, a)
-    await rememberProvince(a.province)
+  const persist = useCallback(async (list: AddressEntry[], sel: string | null) => {
+    setAddresses(list)
+    setSelectedId(sel)
+    await writeJson(KEYS.addresses, list)
+    await writeJson(KEYS.selectedAddress, sel)
+    const current = list.find((x) => x.id === sel)
+    if (current) await rememberProvince(current.province)
   }, [])
+
+  const upsertAddress = useCallback(
+    async (a: SavedAddress & { id?: string; label: string }) => {
+      // Read the stored list: the screen may save before the provider finished loading it
+      const current = await readJson<AddressEntry[]>(KEYS.addresses, addresses)
+      const sel = await readJson<string | null>(KEYS.selectedAddress, selectedId)
+      const id = a.id || `a${Date.now()}`
+      const entry: AddressEntry = { ...a, id }
+      const exists = current.some((x) => x.id === id)
+      const list = exists ? current.map((x) => (x.id === id ? entry : x)) : [...current, entry]
+      await persist(list, sel && exists ? sel : id)
+      return id
+    },
+    [addresses, selectedId, persist]
+  )
+
+  const deleteAddress = useCallback(
+    async (id: string) => {
+      const list = addresses.filter((x) => x.id !== id)
+      await persist(list, selectedId === id ? list[0]?.id ?? null : selectedId)
+    },
+    [addresses, selectedId, persist]
+  )
+
+  const selectAddress = useCallback(async (id: string) => persist(addresses, id), [addresses, persist])
+
+  const address = addresses.find((x) => x.id === selectedId) ?? null
+
+  const saveAddress = useCallback(
+    async (a: SavedAddress) => {
+      const current = addresses.find((x) => x.id === selectedId)
+      await upsertAddress({ ...a, id: current?.id, label: current?.label ?? "البيت" })
+    },
+    [addresses, selectedId, upsertAddress]
+  )
 
   const toggleWish = useCallback((productId: string) => {
     setWishlist((cur) => {
@@ -140,6 +205,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     () => ({
       address,
       saveAddress,
+      addresses,
+      upsertAddress,
+      deleteAddress,
+      selectAddress,
       wishlist,
       isWished: (id) => wishlist.includes(id),
       toggleWish,
@@ -151,7 +220,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ratings,
       requestRatings,
     }),
-    [address, saveAddress, wishlist, toggleWish, orderIds, addOrder, settings, seenAt, markNotificationsSeen, ratings, requestRatings]
+    [address, saveAddress, addresses, upsertAddress, deleteAddress, selectAddress, wishlist, toggleWish, orderIds, addOrder, settings, seenAt, markNotificationsSeen, ratings, requestRatings]
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

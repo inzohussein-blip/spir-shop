@@ -40,14 +40,14 @@ export function HeroCarousel({ props }: BlockProps) {
 
   if (!slides.length) return null
   return (
-    <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ gap: 8 }}>
+    <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       <ScrollView
         ref={ref as never}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={onScroll}
-        style={{ borderRadius: 14 }}
+        style={{ borderRadius: 12 }}
       >
         {slides.map((s, i) => (
           <Pressable
@@ -65,7 +65,7 @@ export function HeroCarousel({ props }: BlockProps) {
         ))}
       </ScrollView>
       {slides.length > 1 ? (
-        <View style={styles.dots}>
+        <View style={styles.dots} pointerEvents="none">
           {slides.map((_, i) => (
             <View key={i} style={[styles.dot, i === index && styles.dotActive]} />
           ))}
@@ -153,13 +153,14 @@ export function FlashSale({ props }: BlockProps) {
 }
 
 const styles = StyleSheet.create({
-  slide: { height: 160, justifyContent: "center", overflow: "hidden" },
-  slideText: { padding: 20, gap: 2, maxWidth: "75%" },
-  slideTitle: { fontSize: 24, fontWeight: "700", lineHeight: 32 },
+  // Banner from the design: photo filling the card, big white title on the opposite side
+  slide: { height: 168, justifyContent: "center", alignItems: "flex-end", overflow: "hidden" },
+  slideText: { padding: 22, gap: 4, maxWidth: "58%" },
+  slideTitle: { fontSize: 25, fontWeight: "700", lineHeight: 34 },
   slideSub: { fontSize: 13 },
-  dots: { flexDirection: "row", justifyContent: "center", gap: 5 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#d4d4d4" },
-  dotActive: { width: 18, backgroundColor: COLORS.primary },
+  dots: { position: "absolute", bottom: 10, left: 0, right: 0, flexDirection: "row", justifyContent: "center", gap: 6 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.55)" },
+  dotActive: { backgroundColor: "#fff", borderWidth: 1.5, borderColor: "rgba(0,0,0,0.25)", width: 8, height: 8, borderRadius: 4, marginTop: -1 },
   trust: { flexDirection: "row", gap: 8 },
   trustItem: {
     flex: 1,

@@ -226,7 +226,7 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
     // The page itself has no settings; everything is a block
     root: { fields: {} },
     categories: {
-      content: { title: "محتوى", components: ["hero_carousel", "hero_banner", "story_bar", "trust_strip", "countdown_offer", "video_banner"] },
+      content: { title: "محتوى", components: ["hero_carousel", "hero_banner", "collection_banner", "collection_pair", "story_bar", "trust_strip", "countdown_offer", "video_banner"] },
       products: { title: "منتجات", components: ["flash_sale", "product_carousel", "product_grid", "category_chips", "brand_strip"] },
       layout: { title: "تنسيق", components: ["heading", "spacer"] },
     },
@@ -354,8 +354,19 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
       },
       product_carousel: {
         label: "منتجات (سلايدر)",
-        fields: { title: { type: "text", label: "العنوان" }, ...sourceFields },
-        defaultProps: { title: "منتجات مختارة", source: "all", category_id: "", collection_id: "", limit: 8 },
+        fields: {
+          title: { type: "text", label: "العنوان" },
+          style: {
+            type: "radio",
+            label: "الشكل",
+            options: [
+              { label: "بطاقات طويلة", value: "featured" },
+              { label: "بطاقات صغيرة", value: "compact" },
+            ],
+          },
+          ...sourceFields,
+        },
+        defaultProps: { title: "منتجات مختارة", style: "featured", source: "all", category_id: "", collection_id: "", limit: 8 },
         render: (p) => <ProductsPreview {...(p as Parameters<typeof ProductsPreview>[0])} />,
       },
       product_grid: {
@@ -403,14 +414,83 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
           </div>
         ),
       },
+      collection_banner: {
+        label: "تشكيلة (بانر بصورة دائرية)",
+        fields: {
+          label: { type: "text", label: "النص الصغير" },
+          title: { type: "textarea", label: "العنوان" },
+          image_url: mediaField("الصورة", "image/*"),
+          link: linkField,
+          variant: {
+            type: "radio",
+            label: "الشكل",
+            options: [
+              { label: "شريط بعرض الشاشة", value: "wide" },
+              { label: "بطاقة", value: "card" },
+              { label: "بطاقة كبيرة بخط عريض", value: "bold" },
+            ],
+          },
+          background_color: colorField("لون الخلفية"),
+        },
+        defaultProps: { label: "تشكيلة جديدة", title: "عنوان التشكيلة", image_url: "", link: "/category/all", variant: "card", background_color: "#f8f8f8" },
+        render: (p) => (
+          <div style={box}>
+            <div style={{ display: "flex", alignItems: "center", background: p.background_color || "#f8f8f8", borderRadius: p.variant === "wide" ? 0 : 10, height: p.variant === "wide" ? 150 : p.variant === "bold" ? 170 : 120, padding: "0 16px" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: C.muted, borderInlineStart: `1px solid ${C.muted}`, paddingInlineStart: 6 }}>{p.label}</div>
+                <div style={{ whiteSpace: "pre-line", fontSize: p.variant === "bold" ? 19 : 17, fontWeight: p.variant === "bold" ? 700 : 400, color: p.variant === "bold" ? C.dark : "#6b6b6b", marginTop: 6 }}>{p.title}</div>
+              </div>
+              <div style={{ width: 100, height: 100, borderRadius: 50, background: p.image_url ? `#ececec url(${p.image_url}) center/cover` : "#ececec" }} />
+            </div>
+          </div>
+        ),
+      },
+      collection_pair: {
+        label: "تشكيلتان جنب بعض",
+        fields: {
+          items: {
+            type: "array",
+            label: "البطاقتان",
+            max: 2,
+            getItemSummary: (item: { title?: string }) => item.title || "بطاقة",
+            arrayFields: {
+              label: { type: "text", label: "النص الصغير" },
+              title: { type: "textarea", label: "العنوان" },
+              image_url: mediaField("الصورة", "image/*"),
+              link: linkField,
+            },
+            defaultItemProps: { label: "", title: "عنوان", image_url: "", link: "/category/all" },
+          },
+        },
+        defaultProps: {
+          items: [
+            { label: "", title: "عنوان", image_url: "", link: "/category/all" },
+            { label: "", title: "عنوان", image_url: "", link: "/category/all" },
+          ],
+        },
+        render: (p) => (
+          <div style={{ ...box, display: "flex", gap: 8 }}>
+            {((p.items as Record<string, string>[]) ?? []).slice(0, 2).map((it, i) => (
+              <div key={i} style={{ flex: 1, height: 130, borderRadius: 10, background: "#f8f8f8", display: "flex", overflow: "hidden" }}>
+                <div style={{ width: "48%", background: it.image_url ? `url(${it.image_url}) center/cover` : "#ececec" }} />
+                <div style={{ flex: 1, padding: 8 }}>
+                  <div style={{ fontSize: 10, color: C.muted }}>{it.label}</div>
+                  <div style={{ whiteSpace: "pre-line", fontSize: 13 }}>{it.title}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ),
+      },
       heading: {
         label: "عنوان",
         fields: {
           text: { type: "text", label: "النص" },
           size: { type: "number", label: "الحجم", min: 12, max: 32 },
           align: { type: "radio", label: "المحاذاة", options: [{ label: "بداية", value: "start" }, { label: "وسط", value: "center" }] },
+          link: { type: "text", label: "رابط «عرض الكل» (اختياري)" },
         },
-        defaultProps: { text: "عنوان القسم", size: 20, align: "start" },
+        defaultProps: { text: "عنوان القسم", size: 20, align: "start", link: "" },
         render: (p) => <div style={{ ...box, fontWeight: 700, fontSize: p.size, textAlign: p.align === "center" ? "center" : "right" }}>{p.text}</div>,
       },
       spacer: {
