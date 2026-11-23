@@ -226,8 +226,8 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
     // The page itself has no settings; everything is a block
     root: { fields: {} },
     categories: {
-      content: { title: "محتوى", components: ["hero_banner", "story_bar", "countdown_offer", "video_banner"] },
-      products: { title: "منتجات", components: ["product_carousel", "product_grid", "category_chips", "brand_strip"] },
+      content: { title: "محتوى", components: ["hero_carousel", "hero_banner", "story_bar", "trust_strip", "countdown_offer", "video_banner"] },
+      products: { title: "منتجات", components: ["flash_sale", "product_carousel", "product_grid", "category_chips", "brand_strip"] },
       layout: { title: "تنسيق", components: ["heading", "spacer"] },
     },
     components: {
@@ -252,6 +252,68 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
                 {p.cta_label ? <span style={{ display: "inline-block", marginTop: 8, background: C.primary, color: "#fff", borderRadius: 16, padding: "4px 12px", fontSize: 12 }}>{p.cta_label}</span> : null}
               </div>
             </div>
+          </div>
+        ),
+      },
+      hero_carousel: {
+        label: "بانرات متحركة",
+        fields: {
+          slides: {
+            type: "array",
+            label: "الشرائح",
+            getItemSummary: (item: { title?: string }) => item.title || "شريحة",
+            arrayFields: {
+              title: { type: "text", label: "العنوان" },
+              subtitle: { type: "text", label: "النص الفرعي" },
+              image_url: mediaField("الصورة", "image/*"),
+              link: linkField,
+              background_color: colorField("لون الخلفية"),
+              text_color: colorField("لون النص"),
+            },
+            defaultItemProps: { title: "عرض جديد", subtitle: "", image_url: "", link: "/category/all", background_color: C.soft, text_color: C.dark },
+          },
+          interval: { type: "number", label: "مدة كل شريحة (ثانية)", min: 2, max: 15 },
+        },
+        defaultProps: {
+          slides: [{ title: "عرض جديد", subtitle: "", image_url: "", link: "/category/all", background_color: C.soft, text_color: C.dark }],
+          interval: 5,
+        },
+        render: (p) => {
+          const first = ((p.slides as Record<string, string>[]) ?? [])[0] ?? {}
+          return (
+            <div style={box}>
+              <div style={{ borderRadius: 14, height: 140, background: first.image_url ? `url(${first.image_url}) center/cover` : first.background_color, color: first.text_color, padding: 16, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ fontWeight: 700, fontSize: 20 }}>{first.title}</div>
+                <div style={{ fontSize: 13 }}>{first.subtitle}</div>
+              </div>
+              <div style={{ textAlign: "center", fontSize: 11, color: C.muted, marginTop: 4 }}>{`${((p.slides as unknown[]) ?? []).length} شرائح - تتقلب تلقائياً`}</div>
+            </div>
+          )
+        },
+      },
+      trust_strip: {
+        label: "شريط الثقة",
+        fields: {},
+        defaultProps: {},
+        render: () => (
+          <div style={{ ...box, display: "flex", gap: 6 }}>
+            {["أصلي 100%", "توصيل لكل المحافظات", "الدفع عند الاستلام"].map((t) => (
+              <span key={t} style={{ flex: 1, background: "#fafafa", borderRadius: 10, padding: 8, fontSize: 11, fontWeight: 700, textAlign: "center" }}>{t}</span>
+            ))}
+          </div>
+        ),
+      },
+      flash_sale: {
+        label: "عروض اليوم",
+        fields: { title: { type: "text", label: "العنوان" } },
+        defaultProps: { title: "عروض اليوم" },
+        render: (p) => (
+          <div style={box}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+              <b style={{ fontSize: 16 }}>{p.title as string}</b>
+              <span style={{ background: "#d64545", color: "#fff", borderRadius: 6, padding: "1px 6px", fontSize: 12, fontWeight: 700 }}>00:00:00</span>
+            </div>
+            <div style={{ fontSize: 12, color: C.muted }}>المنتجات والعداد من قائمة الأسعار النشطة (Price Lists من نوع Sale)</div>
           </div>
         ),
       },

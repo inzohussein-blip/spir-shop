@@ -2,8 +2,11 @@ import { configureStoreSearch, defineMiddlewares, validateAndTransformBody } fro
 import {
   CreateStorySchema,
   PublishLayoutSchema,
+  CreateReviewSchema,
   RegisterPushTokenSchema,
   RollbackLayoutSchema,
+  SaveAppSettingsSchema,
+  UpdateReviewSchema,
   SaveLayoutSchema,
   SendCampaignSchema,
   UpdateStorySchema,
@@ -61,6 +64,22 @@ export default defineMiddlewares({
       methods: ["POST"],
       matcher: "/store/push-tokens",
       middlewares: [validateAndTransformBody(RegisterPushTokenSchema)],
+    },
+    // App settings, reviews
+    {
+      methods: ["POST"],
+      matcher: "/admin/app-settings",
+      middlewares: [validateAndTransformBody(SaveAppSettingsSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/store/app-reviews",
+      middlewares: [validateAndTransformBody(CreateReviewSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/admin/app-reviews/:id",
+      middlewares: [validateAndTransformBody(UpdateReviewSchema)],
     },
   ],
 })

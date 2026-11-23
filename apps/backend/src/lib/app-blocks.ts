@@ -9,6 +9,9 @@ import { z } from "@medusajs/framework/zod"
  */
 export const APP_BLOCK_TYPES = [
   "hero_banner",
+  "hero_carousel",
+  "trust_strip",
+  "flash_sale",
   "story_bar",
   "category_chips",
   "brand_strip",
@@ -48,6 +51,8 @@ export const DEFAULT_HOME_BLOCKS: AppBlock[] = [
       image_url: "",
     },
   },
+  { id: "trust", type: "trust_strip", props: {} },
+  { id: "deals", type: "flash_sale", props: { title: "عروض اليوم" } },
   { id: "categories", type: "category_chips", props: { title: "الأقسام" } },
   { id: "brands", type: "brand_strip", props: { title: "العلامات التجارية" } },
   {

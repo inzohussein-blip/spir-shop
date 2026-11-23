@@ -41,7 +41,28 @@ export const RegisterPushTokenSchema = z.object({
   platform: z.enum(["ios", "android", "web"]),
   cart_id: z.string().max(100).nullable().optional(),
   province: z.string().max(40).nullable().optional(),
+  order_id: z.string().max(100).nullable().optional(),
 })
+
+export const SaveAppSettingsSchema = z.object({
+  free_shipping_threshold: z.number().int().min(0).max(10000000),
+  whatsapp_number: z.string().max(30).default(""),
+  telegram_username: z.string().max(60).default(""),
+  support_phone: z.string().max(30).default(""),
+  baghdad_eta: z.string().max(60),
+  provinces_eta: z.string().max(60),
+  trust_badges: z.array(z.string().min(1).max(40)).max(4),
+})
+
+export const CreateReviewSchema = z.object({
+  product_id: z.string().min(1).max(100),
+  order_id: z.string().min(1).max(100),
+  rating: z.number().int().min(1).max(5),
+  name: z.string().min(1).max(60),
+  comment: z.string().max(1000).nullable().optional(),
+})
+
+export const UpdateReviewSchema = z.object({ status: z.enum(["approved", "hidden"]) })
 
 export type SaveLayoutBody = z.infer<typeof SaveLayoutSchema>
 export type PublishLayoutBody = z.infer<typeof PublishLayoutSchema>
@@ -50,3 +71,6 @@ export type CreateStoryBody = z.infer<typeof CreateStorySchema>
 export type UpdateStoryBody = z.infer<typeof UpdateStorySchema>
 export type SendCampaignBody = z.infer<typeof SendCampaignSchema>
 export type RegisterPushTokenBody = z.infer<typeof RegisterPushTokenSchema>
+export type SaveAppSettingsBody = z.infer<typeof SaveAppSettingsSchema>
+export type CreateReviewBody = z.infer<typeof CreateReviewSchema>
+export type UpdateReviewBody = z.infer<typeof UpdateReviewSchema>

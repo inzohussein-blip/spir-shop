@@ -163,6 +163,8 @@ export type PushTokenInput = {
   cart_id?: string | null
   customer_id?: string | null
   province?: string | null
+  /** An order placed from this device (merged into order_ids) */
+  order_id?: string | null
 }
 
 type TokenCompensation = { id: string; before: Record<string, unknown> | null }
@@ -172,7 +174,15 @@ export const upsertPushTokenStep = createStep(
   async (input: PushTokenInput, { container }) => {
     const svc = service(container)
     const [existing] = await svc.listPushTokens({ token: input.token })
-    const data = { ...input, enabled: true, last_seen_at: new Date() }
+    const { order_id, ...rest } = input
+    const known = ((existing?.order_ids as unknown as string[] | null) ?? []).slice(-49)
+    const orderIds = order_id && !known.includes(order_id) ? [...known, order_id] : known
+    const data = {
+      ...rest,
+      order_ids: orderIds as unknown as Record<string, unknown>,
+      enabled: true,
+      last_seen_at: new Date(),
+    }
     if (existing) {
       const updated = await svc.updatePushTokens({ id: existing.id, ...data })
       const comp: TokenCompensation = { id: existing.id, before: existing }
