@@ -3,7 +3,7 @@
     "name": "Spir Shop",
     "slug": "spir-shop",
     "scheme": "spirshop",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.spirshop.app",
-      "versionCode": 10200,
+      "versionCode": 10300,
       "adaptiveIcon": {
         "backgroundColor": "#fbeeec",
         "foregroundImage": "./assets/android-icon-foreground.png",
