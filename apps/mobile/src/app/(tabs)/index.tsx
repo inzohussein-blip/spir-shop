@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router"
-import { ActivityIndicator, StyleSheet, View } from "react-native"
+import { useState } from "react"
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from "react-native"
 import Button from "../../components/Button"
-import HandRefresh from "../../components/HandRefresh"
 import Header from "../../components/Header"
 import Text from "../../components/Text"
 import { COLORS } from "../../lib/config"
@@ -15,12 +15,21 @@ import BlockRenderer from "../../sdui/Renderer"
 export default function Home() {
   const router = useRouter()
   const { blocks, error, refresh, preview } = useLayout("home")
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refresh()
+    setRefreshing(false)
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
       <Header variant="menu" title="Spir Shop" />
-      {/* pull down: a hand grabs the page like a sheet and pulls it back up (refresh) */}
-      <HandRefresh onRefresh={refresh} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 40 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 40 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
         {preview ? (
           <View style={styles.previewBadge}>
             <Text style={{ color: "#fff", fontSize: 12, textAlign: "center" }}>معاينة المسودة</Text>
@@ -36,7 +45,7 @@ export default function Home() {
         ) : (
           <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
         )}
-      </HandRefresh>
+      </ScrollView>
     </View>
   )
 }
