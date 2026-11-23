@@ -54,7 +54,39 @@ eas submit -p ios        # رفع على App Store
 **قبل كل نسخة جديدة على المتجر:** ارفع `version` في `app.json` (مثلاً من `1.0.0` إلى `1.1.0`) وزِد `android.versionCode`.
 `runtimeVersion` مضبوط على سياسة `appVersion`، يعني تحديثات OTA تروح فقط للنسخ اللي تحمل نفس الرقم. هذا يمنع وصول كود JavaScript جديد لتطبيق ما يملك المكتبات اللي يحتاجها.
 
-## بناء APK وتوزيعه بدون Google Play
+## البناء والتحديث عبر GitHub Actions (الطريقة الأساسية)
+
+الملف `.github/workflows/android-apk.yml` يبني APK موقّع وينشره كـ **GitHub Release**. التطبيقات المثبتة تكتشف الإصدار الجديد تلقائياً:
+
+```
+git tag v1.1.0 && git push origin v1.1.0
+```
+أو من GitHub: **Actions ← Android APK ← Run workflow**، وتكتب رقم النسخة وما الجديد، وتختار «تحديث إجباري» إذا تحتاجه.
+
+**كيف يوصل التحديث للزبائن:**
+- رقم النسخة يؤخذ من الـ tag (`v1.2.3` = `1.2.3`)، و `versionCode` يُحسب منه تلقائياً (`10203`).
+- الخادم (`/store/mobile-version`) يقرأ آخر Release من GitHub إذا كان `MOBILE_GITHUB_REPO` معرّف، ويعتمد الأحدث بين الـ Release وما مكتوب بلوحة التحكم.
+- وجود `[required]` بملاحظات الـ Release يجعل التحديث إجبارياً.
+- التطبيق يعرض «نسخة جديدة متوفرة»، يحمّل الـ APK من GitHub، ويفتح شاشة التثبيت.
+
+**الإعداد لأول مرة (Secrets):** من جهازك، بعد `gh auth login`، وبالمجلد اللي فيه ملفات المفتاح:
+```bash
+./scripts/set-github-secrets.sh /path/to/credentials
+```
+أو أضفها يدوياً من **Settings ← Secrets and variables ← Actions**:
+
+| Secret | القيمة |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | محتوى ملف `spir-release.jks.base64` |
+| `ANDROID_KEYSTORE_PASSWORD` | `SPIR_RELEASE_STORE_PASSWORD` من `keystore.properties` |
+| `ANDROID_KEY_ALIAS` | `spir-release` |
+| `ANDROID_KEY_PASSWORD` | `SPIR_RELEASE_KEY_PASSWORD` من `keystore.properties` |
+
+اختياري، كـ **Variable** (مو Secret): `EXPO_PUBLIC_MEDUSA_BACKEND_URL`، عنوان الخادم العام اللي يُدمج داخل التطبيق.
+
+> التطبيق ما يحتاج مفتاح المتجر (publishable key) وقت البناء، لأنه يجلبه من الخادم (`GET /mobile/config`). لهذا نفس الـ APK يشتغل مع أي خادم.
+
+## بناء APK يدوياً (بدون GitHub)
 
 ### المتطلبات (مرة وحدة)
 - JDK 17، و Android SDK فيه: `platforms;android-37.0`، `build-tools;37.0.0`، `ndk;27.1.12297006`، `cmake;3.22.1`.
