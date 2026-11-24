@@ -1,0 +1,8 @@
+**/node_modules
+**/.medusa
+apps/mobile
+apps/storefront
+apps/backend/static
+apps/backend/.env
+**/credentials
+.git
