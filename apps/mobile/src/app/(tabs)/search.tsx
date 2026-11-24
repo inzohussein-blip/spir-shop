@@ -3,10 +3,11 @@ import { useRouter } from "expo-router"
 import { useEffect, useState } from "react"
 import { LayoutAnimation, Platform, Pressable, ScrollView, StyleSheet, UIManager, View } from "react-native"
 import Header from "../../components/Header"
+import SearchBar from "../../components/SearchBar"
 import Icon from "../../components/Icon"
 import Text from "../../components/Text"
 import { Brand, Category, countProducts, listAllCategories, listBrands, listProducts } from "../../lib/api"
-import { COLORS, SHADOW } from "../../lib/config"
+import { COLORS, SHADOW, TAB_SPACE } from "../../lib/config"
 
 if (Platform.OS === "android") UIManager.setLayoutAnimationEnabledExperimental?.(true)
 
@@ -14,21 +15,6 @@ type Row = { id: string; name: string; href: string; count?: number; indent?: bo
 type Card = { key: string; title: string; color: string; image?: string; rows: Row[]; href: string }
 
 const FALLBACK_COLORS = ["#a3a798", "#8d8180", "#44535a", "#b9adb0", "#c8b49a"]
-
-/** Search pill + square filter button (design: top of "discover" and "search"). */
-export function SearchBar({ onPress, onFilter }: { onPress: () => void; onFilter: () => void }) {
-  return (
-    <View style={styles.searchRow}>
-      <Pressable style={styles.search} onPress={onPress} testID="discover-search">
-        <Icon name="search" size={19} color="#8a8a8f" />
-        <Text style={styles.searchText}>ابحثي</Text>
-      </Pressable>
-      <Pressable style={styles.filterBtn} onPress={onFilter} accessibilityLabel="فلتر" testID="discover-filter">
-        <Icon name="sliders" size={19} color="#5a5a5e" />
-      </Pressable>
-    </View>
-  )
-}
 
 /** One coloured category card; tapping it opens the list of sub-categories underneath. */
 function DiscoverCard({ card, open, onToggle }: { card: Card; open: boolean; onToggle: () => void }) {
@@ -122,7 +108,7 @@ export default function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
       <Header variant="menu" title="اكتشفي" />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 30, gap: 18 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 30 + TAB_SPACE, gap: 18 }}>
         <SearchBar onPress={() => router.push("/find")} onFilter={() => router.push({ pathname: "/category/[id]", params: { id: "all", filter: "1" } })} />
         {cards.map((c) => (
           <DiscoverCard

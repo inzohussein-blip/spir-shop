@@ -8,7 +8,7 @@ import PhotoPicker, { PickedPhoto } from "../components/PhotoPicker"
 import Text from "../components/Text"
 import ThanksModal from "../components/ThanksModal"
 import { createReview, uploadImages } from "../lib/api"
-import { COLORS, FONTS, SHADOW } from "../lib/config"
+import { COLORS, FONTS, RADIUS, SHADOW } from "../lib/config"
 import { useStore } from "../lib/store"
 
 /** Rate a product from a delivered order (design: "rate product"). */
@@ -41,7 +41,7 @@ export default function RateScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#fafafa" }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: COLORS.pageAlt }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <Header title="تقييم المنتج" />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 30, paddingTop: 16, paddingBottom: 40, gap: 26 }}>
         <View style={styles.banner}>
@@ -86,7 +86,7 @@ export default function RateScreen() {
 }
 
 const styles = StyleSheet.create({
-  banner: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#575757", borderRadius: 6, paddingHorizontal: 18, height: 56 },
+  banner: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: COLORS.banner, borderRadius: RADIUS.card - 10, paddingHorizontal: 18, height: 56 },
   bannerText: { flex: 1, color: "#fff", fontSize: 13, fontWeight: "700" },
   stars: { flexDirection: "row", justifyContent: "center", gap: 12 },
   star: { fontSize: 44, color: "#b7bac9", lineHeight: 52 },

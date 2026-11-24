@@ -4,7 +4,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from "react-
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import Icon, { IconName } from "../../components/Icon"
 import Text from "../../components/Text"
-import { COLORS, SHADOW } from "../../lib/config"
+import { COLORS, SHADOW, TAB_SPACE } from "../../lib/config"
 import { useStore } from "../../lib/store"
 
 /** Profile (design: "profile"): avatar, name, settings cog, then one card with the account rows. */
@@ -36,7 +36,7 @@ export default function AccountScreen() {
   ]
 
   return (
-    <ScrollView style={{ backgroundColor: COLORS.bg }} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: insets.top + 50, paddingBottom: 30, gap: 40 }}>
+    <ScrollView style={{ backgroundColor: COLORS.bg }} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: insets.top + 50, paddingBottom: 30 + TAB_SPACE, gap: 40 }}>
       <View style={styles.profile}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>

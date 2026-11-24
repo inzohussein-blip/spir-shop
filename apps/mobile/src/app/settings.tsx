@@ -3,12 +3,13 @@ import { Linking, Platform, Pressable, StyleSheet, View } from "react-native"
 import Header from "../components/Header"
 import Icon, { IconName } from "../components/Icon"
 import Text from "../components/Text"
-import { COLORS } from "../lib/config"
+import { COLORS, THEME_NAME, THEMES } from "../lib/config"
 
 /** Settings (design: "setting"). */
 export default function SettingsScreen() {
   const router = useRouter()
   const rows: { icon: IconName; label: string; hint?: string; onPress: () => void }[] = [
+    { icon: "droplet", label: "المظهر", hint: THEMES[THEME_NAME].label, onPress: () => router.push("/theme") },
     { icon: "globe", label: "اللغة", hint: "العربية", onPress: () => undefined },
     { icon: "bell", label: "الإشعارات", onPress: () => (Platform.OS === "web" ? router.push("/notifications") : Linking.openSettings()) },
     { icon: "file-text", label: "الشروط والأحكام", onPress: () => router.push({ pathname: "/about", params: { section: "terms" } }) },
@@ -21,7 +22,7 @@ export default function SettingsScreen() {
       <Header variant="menu" title="الإعدادات" right={null} />
       <View style={{ paddingHorizontal: 24, paddingTop: 20 }}>
         {rows.map((r) => (
-          <Pressable key={r.label} style={styles.row} onPress={r.onPress}>
+          <Pressable key={r.label} style={styles.row} onPress={r.onPress} testID={`settings-${r.icon}`}>
             <Icon name={r.icon} size={19} color="#5a5a6a" />
             <Text style={styles.text}>{r.label}</Text>
             {r.hint ? <Text style={styles.hint}>{r.hint}</Text> : null}

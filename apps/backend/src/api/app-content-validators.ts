@@ -52,6 +52,7 @@ export const SaveAppSettingsSchema = z.object({
   baghdad_eta: z.string().max(60),
   provinces_eta: z.string().max(60),
   trust_badges: z.array(z.string().min(1).max(40)).max(4),
+  default_theme: z.enum(["elegant", "natural"]).default("elegant"),
 })
 
 export const CreateReviewSchema = z.object({

@@ -14,6 +14,8 @@ export type AppSettings = {
   provinces_eta: string
   /** Trust badges shown on the home screen and product page */
   trust_badges: string[]
+  /** Look of the app until the customer picks one in Settings: "elegant" or "natural" */
+  default_theme: "elegant" | "natural"
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -24,6 +26,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   baghdad_eta: "خلال 24 ساعة",
   provinces_eta: "خلال 2-3 أيام",
   trust_badges: ["أصلي 100%", "توصيل لكل المحافظات", "الدفع عند الاستلام"],
+  default_theme: "elegant",
 }
 
 export function readAppSettings(metadata: Record<string, unknown> | null | undefined): AppSettings {

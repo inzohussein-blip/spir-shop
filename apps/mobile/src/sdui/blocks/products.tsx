@@ -1,11 +1,12 @@
+import { Image } from "expo-image"
 import { Link } from "expo-router"
 import { useEffect, useState } from "react"
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { CategoryIcon } from "../../components/Icon"
 import ProductCard from "../../components/ProductCard"
 import Text from "../../components/Text"
-import { Category, listCategories, listProducts, Product } from "../../lib/api"
-import { COLORS } from "../../lib/config"
+import { Category, listAllCategories, listProducts, Product } from "../../lib/api"
+import { COLORS, IS_NATURAL } from "../../lib/config"
 import { BlockProps, num, str } from "../types"
 
 /** Products for a block: all, a category, or a collection. */
@@ -102,9 +103,33 @@ export function ProductGrid({ props }: BlockProps) {
 export function CategoryChips({ props }: BlockProps) {
   const [cats, setCats] = useState<Category[]>([])
   useEffect(() => {
-    listCategories().then(setCats).catch(() => setCats([]))
+    listAllCategories()
+      .then((all) => setCats(all.filter((c) => !c.parent_category_id)))
+      .catch(() => setCats([]))
   }, [])
   if (!cats.length) return null
+  if (IS_NATURAL) {
+    // natural theme: "Categories / See all" with small white cards (name + photo)
+    return (
+      <View style={{ gap: 12 }}>
+        <SectionTitle title={str(props.title) || "الأقسام"} href="/search" />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}>
+          {cats.map((c) => (
+            <Link key={c.id} href={`/category/${c.id}`} asChild>
+              <Pressable style={styles.catCard} testID={`category-${c.id}`}>
+                <Text style={styles.catCardText} numberOfLines={1}>{c.name}</Text>
+                {c.metadata?.image_url ? (
+                  <Image source={c.metadata.image_url} style={styles.catCardImg} contentFit="cover" />
+                ) : (
+                  <CategoryIcon name={c.name} size={20} color={COLORS.accent} />
+                )}
+              </Pressable>
+            </Link>
+          ))}
+        </ScrollView>
+      </View>
+    )
+  }
   return (
     <View style={{ gap: 12 }}>
       <SectionTitle title={str(props.title)} />
@@ -114,7 +139,7 @@ export function CategoryChips({ props }: BlockProps) {
             <Pressable style={styles.cat} testID={`category-${c.id}`}>
               <View style={[styles.catRing, i === 0 && styles.catRingActive]}>
                 <View style={[styles.catCircle, i === 0 && styles.catCircleActive]}>
-                  <CategoryIcon name={c.name} size={21} color={i === 0 ? "#fff" : "#8a8a8f"} />
+                  <CategoryIcon name={c.name} size={21} color={i === 0 ? COLORS.onStrong : "#8a8a8f"} />
                 </View>
               </View>
               <Text style={[styles.catText, i === 0 && { color: COLORS.primaryDark }]} numberOfLines={1}>
@@ -130,12 +155,15 @@ export function CategoryChips({ props }: BlockProps) {
 
 const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  title: { fontSize: 20, fontWeight: "700", color: COLORS.primaryDark },
-  more: { color: "#9b9b9b", fontSize: 13 },
+  title: { fontSize: IS_NATURAL ? 17 : 20, fontWeight: "700", color: COLORS.primaryDark },
+  more: { color: COLORS.link, fontSize: 13, fontWeight: IS_NATURAL ? "700" : "400" },
   cat: { alignItems: "center", width: 68, gap: 8 },
   catRing: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
-  catRingActive: { borderWidth: 1.5, borderColor: "#3a2c27" },
-  catCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#f3f3f3", alignItems: "center", justifyContent: "center" },
-  catCircleActive: { backgroundColor: "#3a2c27" },
+  catRingActive: { borderWidth: 1.5, borderColor: COLORS.strong },
+  catCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: IS_NATURAL ? COLORS.card : COLORS.soft, alignItems: "center", justifyContent: "center" },
+  catCircleActive: { backgroundColor: COLORS.strong },
+  catCard: { flexDirection: "row", alignItems: "center", gap: 10, height: 50, borderRadius: 14, backgroundColor: COLORS.card, paddingStart: 14, paddingEnd: 6 },
+  catCardText: { fontSize: 13, fontWeight: "700" },
+  catCardImg: { width: 38, height: 40, borderRadius: 10 },
   catText: { fontSize: 11, color: "#9b9b9b", textAlign: "center" },
 })

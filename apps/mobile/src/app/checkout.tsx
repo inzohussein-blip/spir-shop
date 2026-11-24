@@ -192,8 +192,8 @@ export default function Checkout() {
           <>
             <View style={styles.methods}>
               <View style={[styles.method, styles.methodOn]}>
-                <MaterialCommunityIcons name="cash" size={26} color="#fff" />
-                <Text style={{ color: "#fff", fontSize: 12 }}>نقداً عند الاستلام</Text>
+                <MaterialCommunityIcons name="cash" size={26} color={COLORS.onStrong} />
+                <Text style={{ color: COLORS.onStrong, fontSize: 12 }}>نقداً عند الاستلام</Text>
               </View>
               <View style={[styles.method, { opacity: 0.5 }]}>
                 <MaterialCommunityIcons name="credit-card-outline" size={26} color={COLORS.muted} />
@@ -238,12 +238,12 @@ const styles = StyleSheet.create({
   h1: { fontSize: 26, fontWeight: "700" },
   h2: { fontSize: 17, fontWeight: "700", marginTop: 14 },
   option: { flexDirection: "row", alignItems: "center", gap: 16, padding: 16, borderRadius: 6 },
-  optionActive: { backgroundColor: "#fafafa" },
+  optionActive: { backgroundColor: COLORS.pageAlt },
   optionHint: { fontSize: 11, color: "#bdbdbd" },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: "#c4c4c4", alignItems: "center", justifyContent: "center" },
   radioActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accent },
   radioDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#fff" },
-  coupon: { flexDirection: "row", alignItems: "center", gap: 12, height: 48, borderRadius: 8, backgroundColor: "#f6f6f6", paddingHorizontal: 18 },
+  coupon: { flexDirection: "row", alignItems: "center", gap: 12, height: 48, borderRadius: 8, backgroundColor: COLORS.soft, paddingHorizontal: 18 },
   couponInput: {
     flex: 1,
     fontFamily: FONTS.regular,
@@ -254,9 +254,9 @@ const styles = StyleSheet.create({
   },
   promoTag: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 10, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: "#eaf3f0" },
   methods: { flexDirection: "row", gap: 12 },
-  method: { flex: 1, height: 64, borderRadius: 8, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", gap: 4, ...SHADOW, shadowOpacity: 0.08, elevation: 3 },
-  methodOn: { backgroundColor: "#3a3a3a" },
-  codNote: { flexDirection: "row", gap: 10, backgroundColor: "#fafafa", borderRadius: 10, padding: 14 },
+  method: { flex: 1, height: 64, borderRadius: 8, backgroundColor: COLORS.card, alignItems: "center", justifyContent: "center", gap: 4, ...SHADOW, shadowOpacity: 0.08, elevation: 3 },
+  methodOn: { backgroundColor: COLORS.strong },
+  codNote: { flexDirection: "row", gap: 10, backgroundColor: COLORS.card, borderRadius: 10, padding: 14 },
   deliverTo: { gap: 4, paddingVertical: 4 },
   totals: { marginTop: 4 },
   sumRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: "#eeeeee" },

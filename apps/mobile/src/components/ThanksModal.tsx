@@ -32,6 +32,6 @@ const styles = StyleSheet.create({
   check: { width: 60, height: 60, borderRadius: 30, backgroundColor: COLORS.accent, alignItems: "center", justifyContent: "center" },
   title: { fontSize: 17, fontWeight: "700", marginTop: 6 },
   body: { fontSize: 13, color: "#6b6b8a", textAlign: "center", lineHeight: 21 },
-  btn: { backgroundColor: "#000", borderRadius: 16, height: 32, paddingHorizontal: 40, alignItems: "center", justifyContent: "center", marginTop: 4 },
+  btn: { backgroundColor: COLORS.dark, borderRadius: 16, height: 32, paddingHorizontal: 40, alignItems: "center", justifyContent: "center", marginTop: 4 },
   btnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
 })

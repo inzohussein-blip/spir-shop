@@ -2,7 +2,7 @@ import { Image } from "expo-image"
 import { useRouter } from "expo-router"
 import { Pressable, StyleSheet, View } from "react-native"
 import Text from "../../components/Text"
-import { COLORS } from "../../lib/config"
+import { COLORS, IS_NATURAL } from "../../lib/config"
 import { openLink } from "../../lib/links"
 import { BlockProps, str } from "../types"
 
@@ -49,7 +49,7 @@ export function CollectionBanner({ props }: BlockProps) {
       disabled={!link}
       style={[
         styles.banner,
-        { height, backgroundColor: str(props.background_color, "#f8f8f8") },
+        { height, backgroundColor: str(props.background_color, IS_NATURAL ? COLORS.card : "#f8f8f8") },
         wide ? { marginHorizontal: -20, borderRadius: 0 } : null,
       ]}
       testID={`collection-${str(props.title).slice(0, 12)}`}
@@ -78,7 +78,7 @@ export function CollectionPair({ props }: BlockProps) {
         <Pressable
           key={i}
           onPress={() => openLink(router, it.link)}
-          style={[styles.half, { backgroundColor: it.background_color || "#f8f8f8" }]}
+          style={[styles.half, { backgroundColor: it.background_color || (IS_NATURAL ? COLORS.card : "#f8f8f8") }]}
         >
           {it.image_url ? <Image source={it.image_url} style={styles.halfImage} contentFit="cover" /> : null}
           <View style={styles.halfText}>

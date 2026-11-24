@@ -3,7 +3,7 @@ import { ReactNode, useEffect, useState } from "react"
 import { Pressable, StyleSheet, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { getNotifications } from "../lib/api"
-import { COLORS, SHADOW } from "../lib/config"
+import { COLORS, IS_NATURAL, SHADOW } from "../lib/config"
 import { useDrawer } from "../lib/drawer"
 import { useStore } from "../lib/store"
 import Icon from "./Icon"
@@ -27,6 +27,11 @@ export function BackButton({ onPress, light }: { onPress?: () => void; light?: b
 }
 
 /** Bell with a red dot when there are notifications the customer hasn't opened. */
+/** Round white button around header icons in the "natural" theme. */
+function Round({ children }: { children: ReactNode }) {
+  return IS_NATURAL ? <View style={styles.round}>{children}</View> : <>{children}</>
+}
+
 export function BellButton() {
   const router = useRouter()
   const { address, notificationsSeenAt } = useStore()
@@ -38,8 +43,10 @@ export function BellButton() {
   }, [address?.province, notificationsSeenAt])
   return (
     <Pressable onPress={() => router.push("/notifications")} hitSlop={8} accessibilityLabel="الإشعارات" testID="open-notifications">
-      <Icon name="bell" size={21} />
-      {unread ? <View style={styles.unread} /> : null}
+      <Round>
+        <Icon name="bell" size={IS_NATURAL ? 19 : 21} />
+        {unread ? <View style={[styles.unread, IS_NATURAL && { top: 10, end: 11 }]} /> : null}
+      </Round>
     </Pressable>
   )
 }
@@ -47,10 +54,20 @@ export function BellButton() {
 export function MenuButton() {
   const { open } = useDrawer()
   return (
-    <Pressable onPress={open} hitSlop={8} accessibilityLabel="القائمة" testID="open-menu" style={{ gap: 5, paddingVertical: 4 }}>
-      <View style={[styles.bar, { width: 20 }]} />
-      <View style={[styles.bar, { width: 14 }]} />
-      <View style={[styles.bar, { width: 20 }]} />
+    <Pressable onPress={open} hitSlop={8} accessibilityLabel="القائمة" testID="open-menu">
+      {IS_NATURAL ? (
+        <View style={[styles.round, { gap: 4 }]}>
+          <View style={[styles.bar, { width: 17 }]} />
+          <View style={[styles.bar, { width: 17 }]} />
+          <View style={[styles.bar, { width: 17 }]} />
+        </View>
+      ) : (
+        <View style={{ gap: 5, paddingVertical: 4 }}>
+          <View style={[styles.bar, { width: 20 }]} />
+          <View style={[styles.bar, { width: 14 }]} />
+          <View style={[styles.bar, { width: 20 }]} />
+        </View>
+      )}
     </Pressable>
   )
 }
@@ -84,13 +101,14 @@ export default function Header({
 }
 
 const styles = StyleSheet.create({
-  wrap: { flexDirection: "row", alignItems: "center", paddingHorizontal: 24, paddingBottom: 14, backgroundColor: "transparent" },
-  side: { width: 48, alignItems: "flex-start" },
-  title: { flex: 1, textAlign: "center", fontSize: 19, fontWeight: "700", color: COLORS.primaryDark },
+  wrap: { flexDirection: "row", alignItems: "center", paddingHorizontal: IS_NATURAL ? 20 : 24, paddingBottom: 14, backgroundColor: "transparent" },
+  side: { width: 52, alignItems: "flex-start" },
+  title: { flex: 1, textAlign: "center", fontSize: IS_NATURAL ? 18 : 19, fontWeight: "700", color: COLORS.primaryDark },
+  round: { width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.card, alignItems: "center", justifyContent: "center", ...SHADOW, shadowOpacity: 0.06 },
   back: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: IS_NATURAL ? 42 : 34,
+    height: IS_NATURAL ? 42 : 34,
+    borderRadius: IS_NATURAL ? 21 : 17,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",

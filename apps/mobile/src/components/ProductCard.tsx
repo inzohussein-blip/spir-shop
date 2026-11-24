@@ -3,7 +3,7 @@ import { Link } from "expo-router"
 import { useEffect } from "react"
 import { Pressable, StyleSheet, View } from "react-native"
 import { Product } from "../lib/api"
-import { COLORS, SHADOW } from "../lib/config"
+import { COLORS, IS_NATURAL, SHADOW } from "../lib/config"
 import { formatIqd } from "../lib/format"
 import { saleInfo, useStore } from "../lib/store"
 import { CategoryIcon, HeartIcon } from "./Icon"
@@ -73,6 +73,37 @@ export default function ProductCard({ product, variant = "grid" }: { product: Pr
     )
   }
 
+  if (IS_NATURAL) {
+    // natural theme: white rounded card, photo on top, heart in the corner, name and price below
+    const rating = ratings[product.id]
+    return (
+      <Link href={`/product/${product.handle}`} asChild>
+        <Pressable style={variant === "featured" ? styles.nFeatured : styles.nCard} testID={`product-${product.handle}`}>
+          <Thumb product={product} style={styles.nImg} />
+          <Pressable
+            style={styles.nHeart}
+            onPress={(e) => {
+              e.preventDefault?.()
+              toggleWish(product.id)
+            }}
+            hitSlop={8}
+            accessibilityLabel="المفضلة"
+            testID={`wish-${product.handle}`}
+          >
+            <HeartIcon filled={isWished(product.id)} size={16} color={COLORS.primaryDark} />
+          </Pressable>
+          <View style={{ padding: 10, gap: 4 }}>
+            <Text style={styles.title} numberOfLines={1}>
+              {product.title}
+            </Text>
+            <PriceLine product={product} />
+            {variant === "grid" && rating?.count ? <Stars value={rating.average} count={rating.count} size={10} /> : null}
+          </View>
+        </Pressable>
+      </Link>
+    )
+  }
+
   if (variant === "featured") {
     return (
       <Link href={`/product/${product.handle}`} asChild>
@@ -118,7 +149,11 @@ export default function ProductCard({ product, variant = "grid" }: { product: Pr
 }
 
 const styles = StyleSheet.create({
-  thumb: { backgroundColor: "#f3f3f3", overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  thumb: { backgroundColor: COLORS.soft, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  nCard: { flex: 1, margin: 6, maxWidth: "50%", backgroundColor: COLORS.card, borderRadius: 18, overflow: "hidden" },
+  nFeatured: { width: 150, backgroundColor: COLORS.card, borderRadius: 18, overflow: "hidden" },
+  nImg: { aspectRatio: 0.95, width: "100%" },
+  nHeart: { position: "absolute", top: 8, start: 8, width: 30, height: 30, borderRadius: 15, backgroundColor: COLORS.card, alignItems: "center", justifyContent: "center" },
   card: { flex: 1, margin: 8, gap: 5, maxWidth: "50%" },
   gridImg: { aspectRatio: 0.78, borderRadius: 10, marginBottom: 6 },
   heart: {
@@ -139,7 +174,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.card,
     borderRadius: 10,
     padding: 0,
     paddingEnd: 12,

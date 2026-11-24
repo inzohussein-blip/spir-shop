@@ -6,7 +6,7 @@ import Header from "../components/Header"
 import Text from "../components/Text"
 import ThanksModal from "../components/ThanksModal"
 import { sendFeedback } from "../lib/api"
-import { COLORS, FONTS, SHADOW } from "../lib/config"
+import { COLORS, FONTS, IS_NATURAL, SHADOW } from "../lib/config"
 import { useStore } from "../lib/store"
 
 /** Rate this app (design: "share your feedback"). Sent to the staff Telegram chat. */
@@ -34,14 +34,14 @@ export default function FeedbackScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#fafafa" }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: COLORS.pageAlt }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <Header title="شاركينا رأيك" />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 30, paddingTop: 16, paddingBottom: 40, gap: 26 }}>
         <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "500" }}>شنو رأيج بتطبيق Spir Shop؟</Text>
         <View style={styles.stars}>
           {[1, 2, 3, 4, 5].map((n) => (
             <Pressable key={n} onPress={() => setRating(n)} hitSlop={6} testID={`app-star-${n}`}>
-              <Text style={[styles.star, n <= rating && { color: "#1d1f22" }]}>★</Text>
+              <Text style={[styles.star, n <= rating && { color: IS_NATURAL ? COLORS.accent : COLORS.primaryDark }]}>★</Text>
             </Pressable>
           ))}
         </View>

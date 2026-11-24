@@ -6,7 +6,7 @@ import Header from "../../components/Header"
 import Icon from "../../components/Icon"
 import Text from "../../components/Text"
 import { AppOrder, getOrders } from "../../lib/api"
-import { COLORS, SHADOW } from "../../lib/config"
+import { COLORS, RADIUS, SHADOW } from "../../lib/config"
 import { formatIqd } from "../../lib/format"
 import { shortDate, STATUS_LABEL, trackingCode } from "../../lib/order-labels"
 import { useStore } from "../../lib/store"
@@ -50,7 +50,7 @@ export default function OrdersScreen() {
           <View style={styles.tabs}>
             {TABS.map((t) => (
               <Pressable key={t.key} onPress={() => setTab(t.key)} style={[styles.tab, tab === t.key && styles.tabOn]} testID={`orders-tab-${t.key}`}>
-                <Text style={[styles.tabText, tab === t.key && { color: "#fff" }]}>{t.label}</Text>
+                <Text style={[styles.tabText, tab === t.key && { color: COLORS.onStrong }]}>{t.label}</Text>
               </Pressable>
             ))}
           </View>
@@ -111,9 +111,9 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   tabs: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 22, paddingBottom: 18 },
   tab: { height: 30, paddingHorizontal: 18, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  tabOn: { backgroundColor: "#454545" },
+  tabOn: { backgroundColor: COLORS.strong },
   tabText: { fontSize: 14, fontWeight: "500" },
-  card: { backgroundColor: "#fff", borderRadius: 8, paddingHorizontal: 22, paddingVertical: 18, gap: 10, ...SHADOW, shadowOpacity: 0.1, elevation: 3 },
+  card: { backgroundColor: COLORS.card, borderRadius: RADIUS.card - 8, paddingHorizontal: 22, paddingVertical: 18, gap: 10, ...SHADOW, shadowOpacity: 0.1, elevation: 3 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   orderNo: { fontSize: 17, fontWeight: "700" },
   date: { fontSize: 13, color: "#8a8a8f" },

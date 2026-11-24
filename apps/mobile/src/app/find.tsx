@@ -7,7 +7,7 @@ import Icon from "../components/Icon"
 import ProductCard from "../components/ProductCard"
 import Text from "../components/Text"
 import { listProducts, Product } from "../lib/api"
-import { COLORS, FONTS, SHADOW } from "../lib/config"
+import { COLORS, FONTS, IS_NATURAL, SHADOW } from "../lib/config"
 import { addRecentSearch, getRecentSearches, saveRecentSearches } from "../lib/filters"
 
 /** Search (design: "search"): back, search field + filter, recent searches, popular this week. */
@@ -128,6 +128,6 @@ const styles = StyleSheet.create({
   recentTitle: { fontSize: 15, color: "#9b9b9b", fontWeight: "500" },
   popularTitle: { fontSize: 20, fontWeight: "700" },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  chip: { flexDirection: "row", alignItems: "center", gap: 16, height: 38, paddingHorizontal: 18, borderRadius: 10, backgroundColor: "#f8f8f8" },
+  chip: { flexDirection: "row", alignItems: "center", gap: 16, height: 38, paddingHorizontal: 18, borderRadius: 10, backgroundColor: IS_NATURAL ? COLORS.card : "#f8f8f8" },
   chipText: { fontSize: 14, color: "#4a4a4e" },
 })

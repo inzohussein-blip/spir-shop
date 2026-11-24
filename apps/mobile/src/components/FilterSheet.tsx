@@ -111,7 +111,7 @@ export default function FilterSheet({
                 const on = draft.rating === n
                 return (
                   <Pressable key={n} onPress={() => set({ rating: on ? 0 : n })} style={[styles.rate, on && styles.rateOn]} testID={`filter-rating-${n}`}>
-                    <Text style={[styles.rateText, on && { color: "#fff" }]}>{`★ ${n}`}</Text>
+                    <Text style={[styles.rateText, on && { color: COLORS.onStrong }]}>{`★ ${n}`}</Text>
                   </Pressable>
                 )
               })}
@@ -150,8 +150,8 @@ export default function FilterSheet({
                 const on = draft.discounts.includes(d)
                 return (
                   <Pressable key={d} onPress={() => set({ discounts: toggle(draft.discounts, d) })} style={[styles.chip, on && styles.chipOn]} testID={`filter-discount-${d}`}>
-                    <Text style={[styles.chipText, on && { color: "#fff" }]}>{`خصم ${d}%+`}</Text>
-                    {on ? <Icon name="x" size={14} color="#fff" /> : null}
+                    <Text style={[styles.chipText, on && { color: COLORS.onStrong }]}>{`خصم ${d}%+`}</Text>
+                    {on ? <Icon name="x" size={14} color={COLORS.onStrong} /> : null}
                   </Pressable>
                 )
               })}
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.card,
     borderTopRightRadius: 30,
     borderBottomRightRadius: 30,
     paddingHorizontal: 26,
@@ -208,15 +208,15 @@ const styles = StyleSheet.create({
   swatchOn: { borderWidth: 1.5, borderColor: COLORS.primaryDark },
   swatch: { width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: "rgba(0,0,0,0.06)" },
   rate: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: COLORS.primaryDark, alignItems: "center", justifyContent: "center" },
-  rateOn: { backgroundColor: "#3a2c27", borderColor: "#3a2c27" },
+  rateOn: { backgroundColor: COLORS.strong, borderColor: COLORS.strong },
   rateText: { fontSize: 11, fontWeight: "700" },
   select: { flexDirection: "row", alignItems: "center", gap: 10, height: 40, borderRadius: 20, borderWidth: 1, borderColor: "#d8d8d8", paddingHorizontal: 16 },
   options: { borderWidth: 1, borderColor: "#eee", borderRadius: 14, paddingVertical: 4, marginTop: -6 },
   option: { paddingHorizontal: 16, paddingVertical: 10 },
   chip: { flexDirection: "row", alignItems: "center", gap: 8, height: 36, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: COLORS.primaryDark },
-  chipOn: { backgroundColor: "#3a2c27", borderColor: "#3a2c27" },
+  chipOn: { backgroundColor: COLORS.strong, borderColor: COLORS.strong },
   chipText: { fontSize: 13 },
   foot: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingTop: 12 },
-  apply: { backgroundColor: "#3a2c27", height: 44, width: 120, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  applyText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  apply: { backgroundColor: COLORS.strong, height: 44, width: 120, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  applyText: { color: COLORS.onStrong, fontSize: 15, fontWeight: "700" },
 })

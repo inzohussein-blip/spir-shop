@@ -12,7 +12,13 @@ type Settings = {
   baghdad_eta: string
   provinces_eta: string
   trust_badges: string[]
+  default_theme: "elegant" | "natural"
 }
+
+const THEMES = [
+  { value: "elegant", label: "أنيق", hint: "أبيض ورمادي داكن", colors: ["#ffffff", "#343434", "#508a7b"] },
+  { value: "natural", label: "طبيعي", hint: "أخضر فاتح وبيج", colors: ["#f6f6f3", "#9cc43a", "#111111"] },
+] as const
 
 /** Store-wide app settings: free delivery, contact links, delivery estimates, trust badges. */
 const AppSettingsPage = () => {
@@ -73,6 +79,33 @@ const AppSettingsPage = () => {
             <Label>مدة التوصيل للمحافظات</Label>
             <Input value={s.provinces_eta} onChange={(e) => set("provinces_eta", e.target.value)} />
           </div>
+        </div>
+      </Container>
+
+      <Container className="flex flex-col gap-4">
+        <Heading level="h2">مظهر التطبيق</Heading>
+        <Text size="small" className="text-ui-fg-subtle">
+          المظهر الافتراضي لكل الزبائن. كل زبون يكدر يغيّره من «الإعدادات» داخل التطبيق، ويطبَّق عند فتح التطبيق المرة الجاية.
+        </Text>
+        <div className="flex gap-3">
+          {THEMES.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => set("default_theme", t.value)}
+              className={`flex items-center gap-3 rounded-lg border p-3 text-start ${s.default_theme === t.value ? "border-ui-fg-interactive bg-ui-bg-subtle" : "border-ui-border-base"}`}
+            >
+              <div className="flex">
+                {t.colors.map((c) => (
+                  <span key={c} style={{ background: c }} className="-ms-1 inline-block h-6 w-6 rounded-full border border-ui-border-base" />
+                ))}
+              </div>
+              <div>
+                <Text weight="plus">{t.label}</Text>
+                <Text size="xsmall" className="text-ui-fg-subtle">{t.hint}</Text>
+              </div>
+            </button>
+          ))}
         </div>
       </Container>
 

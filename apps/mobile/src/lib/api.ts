@@ -230,6 +230,7 @@ export type AppSettings = {
   baghdad_eta: string
   provinces_eta: string
   trust_badges: string[]
+  default_theme?: "elegant" | "natural"
 }
 export const getAppSettings = async () => (await storeFetch<{ settings: AppSettings }>("/app-settings")).settings
 

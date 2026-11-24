@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { AppSettings, getAppSettings, getRatings, Rating } from "./api"
+import { rememberStoreTheme } from "./config"
 import { rememberProvince } from "./push"
 
 /**
@@ -108,7 +109,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     readJson<string[]>(KEYS.wishlist, []).then(setWishlist)
     readJson<string[]>(KEYS.orders, []).then(setOrderIds)
     readJson<number>(KEYS.notificationsSeen, 0).then(setSeenAt)
-    getAppSettings().then(setSettings).catch(() => undefined)
+    getAppSettings()
+      .then((st) => {
+        setSettings(st)
+        rememberStoreTheme(st.default_theme)
+      })
+      .catch(() => undefined)
   }, [])
 
   const persist = useCallback(async (list: AddressEntry[], sel: string | null) => {

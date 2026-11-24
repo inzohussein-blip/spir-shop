@@ -6,7 +6,7 @@ import Header from "../../components/Header"
 import Text from "../../components/Text"
 import { AppOrder, getOrders } from "../../lib/api"
 import { useCart } from "../../lib/cart"
-import { COLORS, SHADOW } from "../../lib/config"
+import { COLORS, RADIUS, SHADOW } from "../../lib/config"
 import { formatIqd } from "../../lib/format"
 import { trackingCode } from "../../lib/order-labels"
 import { useStore } from "../../lib/store"
@@ -69,7 +69,7 @@ export default function OrderInfo() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fafafa" }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.pageAlt }}>
       <Header title={`طلب #${order.display_id}`} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40, gap: 26 }}>
         <View style={[styles.banner, canceled && { backgroundColor: COLORS.danger }]} testID="order-banner">
@@ -157,10 +157,10 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  banner: { flexDirection: "row", alignItems: "center", gap: 16, backgroundColor: "#575757", borderRadius: 8, paddingHorizontal: 30, paddingVertical: 24 },
+  banner: { flexDirection: "row", alignItems: "center", gap: 16, backgroundColor: COLORS.banner, borderRadius: RADIUS.card - 8, paddingHorizontal: 30, paddingVertical: 24 },
   bannerTitle: { color: "#fff", fontSize: 17, fontWeight: "700" },
   bannerSub: { color: "#fff", fontSize: 12, opacity: 0.9 },
-  card: { backgroundColor: "#fff", borderRadius: 8, paddingHorizontal: 18, paddingVertical: 8, ...SHADOW, shadowOpacity: 0.06 },
+  card: { backgroundColor: COLORS.card, borderRadius: RADIUS.card - 8, paddingHorizontal: 18, paddingVertical: 8, ...SHADOW, shadowOpacity: 0.06 },
   infoRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 16, paddingVertical: 10 },
   infoLabel: { fontSize: 13, color: "#8a8a8f" },
   infoValue: { flex: 1, fontSize: 13, textAlign: "right" },
@@ -174,6 +174,6 @@ const styles = StyleSheet.create({
   totalRow: { borderTopWidth: 1, borderTopColor: "#ececec", paddingTop: 14, marginTop: 6 },
   btn: { flex: 1, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
   btnOutline: { borderWidth: 1, borderColor: "#6b6b8a" },
-  btnDark: { backgroundColor: "#343434" },
-  btnDarkText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  btnDark: { backgroundColor: COLORS.primary },
+  btnDarkText: { color: COLORS.onPrimary, fontSize: 16, fontWeight: "700" },
 })

@@ -26,11 +26,11 @@ export default function Button({ label, icon, loading, variant = "primary", disa
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={outline ? COLORS.primary : "#fff"} />
+        <ActivityIndicator color={outline ? COLORS.primaryDark : COLORS.onPrimary} />
       ) : (
         <View style={styles.row}>
-          {icon ? <Icon name={icon} size={18} color={outline ? COLORS.primary : "#fff"} /> : null}
-          <Text style={[styles.label, outline && { color: COLORS.primary }]}>{label}</Text>
+          {icon ? <Icon name={icon} size={18} color={outline ? COLORS.primaryDark : COLORS.onPrimary} /> : null}
+          <Text style={[styles.label, outline && { color: COLORS.primaryDark }]}>{label}</Text>
         </View>
       )}
     </Pressable>
@@ -40,7 +40,7 @@ export default function Button({ label, icon, loading, variant = "primary", disa
 const styles = StyleSheet.create({
   base: { height: 48, borderRadius: RADIUS.button, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 },
   primary: { backgroundColor: COLORS.primary },
-  outline: { borderWidth: 1, borderColor: COLORS.primary, backgroundColor: "#fff" },
+  outline: { borderWidth: 1, borderColor: COLORS.primaryDark, backgroundColor: "transparent" },
   row: { flexDirection: "row", alignItems: "center", gap: 10 },
-  label: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  label: { color: COLORS.onPrimary, fontWeight: "700", fontSize: 16 },
 })

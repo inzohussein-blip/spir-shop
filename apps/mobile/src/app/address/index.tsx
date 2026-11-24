@@ -3,7 +3,7 @@ import { useRouter } from "expo-router"
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import Header from "../../components/Header"
 import Text from "../../components/Text"
-import { COLORS, SHADOW } from "../../lib/config"
+import { COLORS, IS_NATURAL, SHADOW } from "../../lib/config"
 import { useStore } from "../../lib/store"
 
 export const labelIcon = (label: string) => (/عمل|دوام|مكتب/.test(label) ? "office-building-outline" : /بيت|منزل/.test(label) ? "home-outline" : "map-marker-outline")
@@ -14,7 +14,7 @@ export default function AddressesScreen() {
   const { addresses, address, selectAddress } = useStore()
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fafafa" }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.pageAlt }}>
       <Header title="عنوان التوصيل" />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40, gap: 26 }}>
         {addresses.length ? (
@@ -49,14 +49,14 @@ export default function AddressesScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: "row", alignItems: "flex-start", gap: 14, backgroundColor: "#fff", borderRadius: 16, padding: 20, ...SHADOW, shadowOpacity: 0.06 },
-  radio: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: "#000", alignItems: "center", justifyContent: "center", marginTop: 10 },
+  card: { flexDirection: "row", alignItems: "flex-start", gap: 14, backgroundColor: COLORS.card, borderRadius: 16, padding: 20, ...SHADOW, shadowOpacity: 0.06 },
+  radio: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: IS_NATURAL ? COLORS.accent : "#000", alignItems: "center", justifyContent: "center", marginTop: 10 },
   radioOn: {},
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#000" },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: IS_NATURAL ? COLORS.accent : "#000" },
   small: { fontSize: 11, color: "#5a5a6a" },
   label: { fontSize: 15, fontWeight: "500" },
   line: { fontSize: 12, color: "#a0a0b0", marginTop: 8 },
   edit: { fontSize: 12, color: "#ff5a5a", textDecorationLine: "underline" },
-  add: { alignSelf: "center", backgroundColor: "#333", height: 48, borderRadius: 24, paddingHorizontal: 32, alignItems: "center", justifyContent: "center", marginTop: 60 },
-  addText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  add: { alignSelf: "center", backgroundColor: COLORS.primary, height: 48, borderRadius: 24, paddingHorizontal: 32, alignItems: "center", justifyContent: "center", marginTop: 60 },
+  addText: { color: COLORS.onPrimary, fontSize: 16, fontWeight: "700" },
 })

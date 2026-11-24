@@ -6,7 +6,7 @@ import Icon, { IconName } from "../../components/Icon"
 import ProductCard from "../../components/ProductCard"
 import Text from "../../components/Text"
 import { getSale, listProducts, Product, Sale } from "../../lib/api"
-import { COLORS } from "../../lib/config"
+import { COLORS, IS_NATURAL } from "../../lib/config"
 import { openLink } from "../../lib/links"
 import { useStore } from "../../lib/store"
 import { BlockProps, num, str } from "../types"
@@ -47,9 +47,29 @@ export function HeroCarousel({ props }: BlockProps) {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={onScroll}
-        style={{ borderRadius: 12 }}
+        style={{ borderRadius: IS_NATURAL ? 22 : 12 }}
       >
-        {slides.map((s, i) => (
+        {slides.map((s, i) =>
+          IS_NATURAL ? (
+            // natural theme: green card, small black tag, dark title, black "shop now" pill, photo on the side
+            <Pressable key={i} onPress={() => openLink(router, s.link)} style={[styles.green, { width: width || 1 }]} testID={`slide-${i}`}>
+              <View style={styles.greenText}>
+                {s.subtitle ? (
+                  <View style={styles.tag}>
+                    <Text style={styles.tagText} numberOfLines={1}>{s.subtitle}</Text>
+                  </View>
+                ) : null}
+                {s.title ? <Text style={styles.greenTitle} numberOfLines={3}>{s.title.replace(/\n/g, " ")}</Text> : null}
+                <View style={styles.shop}>
+                  <Text style={styles.shopText}>تسوّقي الآن</Text>
+                  <View style={styles.shopArrow}>
+                    <Icon name="arrow-up-left" size={14} color={COLORS.dark} />
+                  </View>
+                </View>
+              </View>
+              {s.image_url ? <Image source={s.image_url} style={styles.greenImage} contentFit="cover" /> : null}
+            </Pressable>
+          ) : (
           <Pressable
             key={i}
             onPress={() => openLink(router, s.link)}
@@ -62,12 +82,13 @@ export function HeroCarousel({ props }: BlockProps) {
               {s.title ? <Text style={[styles.slideTitle, { color: s.text_color || COLORS.text }]}>{s.title}</Text> : null}
             </View>
           </Pressable>
-        ))}
+          )
+        )}
       </ScrollView>
       {slides.length > 1 ? (
-        <View style={styles.dots} pointerEvents="none">
+        <View style={IS_NATURAL ? styles.dotsBelow : styles.dots} pointerEvents="none">
           {slides.map((_, i) => (
-            <View key={i} style={[styles.dot, i === index && styles.dotActive]} />
+            <View key={i} style={IS_NATURAL ? [styles.gDot, i === index && styles.gDotOn] : [styles.dot, i === index && styles.dotActive]} />
           ))}
         </View>
       ) : null}
@@ -159,6 +180,18 @@ const styles = StyleSheet.create({
   slideTitle: { fontSize: 25, fontWeight: "700", lineHeight: 34 },
   slideSub: { fontSize: 13 },
   dots: { position: "absolute", bottom: 10, left: 0, right: 0, flexDirection: "row", justifyContent: "center", gap: 6 },
+  green: { height: 160, backgroundColor: COLORS.primary, flexDirection: "row", alignItems: "center", overflow: "hidden" },
+  greenText: { flex: 1, paddingHorizontal: 18, gap: 8, alignItems: "flex-start" },
+  tag: { backgroundColor: COLORS.dark, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
+  tagText: { color: "#fff", fontSize: 11 },
+  greenTitle: { color: COLORS.onPrimary, fontSize: 17, fontWeight: "700", lineHeight: 25 },
+  shop: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: COLORS.dark, borderRadius: 22, height: 40, paddingStart: 16, paddingEnd: 6, marginTop: 2 },
+  shopText: { color: "#fff", fontSize: 14, fontWeight: "700" },
+  shopArrow: { width: 28, height: 28, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  greenImage: { width: 140, height: 136, borderRadius: 18, marginEnd: 12 },
+  dotsBelow: { flexDirection: "row", justifyContent: "center", gap: 5, marginTop: 10 },
+  gDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#d6d8d2" },
+  gDotOn: { width: 20, backgroundColor: COLORS.primary },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.55)" },
   dotActive: { backgroundColor: "#fff", borderWidth: 1.5, borderColor: "rgba(0,0,0,0.25)", width: 8, height: 8, borderRadius: 4, marginTop: -1 },
   trust: { flexDirection: "row", gap: 8 },

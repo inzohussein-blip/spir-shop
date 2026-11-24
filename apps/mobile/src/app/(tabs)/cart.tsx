@@ -8,7 +8,7 @@ import Icon from "../../components/Icon"
 import Text from "../../components/Text"
 import { ShippingOption } from "../../lib/api"
 import { SavedLine, useCart } from "../../lib/cart"
-import { COLORS, SHADOW } from "../../lib/config"
+import { COLORS, SHADOW, TAB_SPACE } from "../../lib/config"
 import { formatIqd } from "../../lib/format"
 import { useStore } from "../../lib/store"
 
@@ -170,7 +170,8 @@ const styles = StyleSheet.create({
   boxOn: { backgroundColor: COLORS.accent },
   boxOff: { backgroundColor: "#c4c4c4" },
   summary: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.card,
+    marginBottom: TAB_SPACE,
     paddingHorizontal: 24,
     paddingTop: 10,
     paddingBottom: 18,

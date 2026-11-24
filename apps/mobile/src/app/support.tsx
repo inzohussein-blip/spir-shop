@@ -11,7 +11,7 @@ export default function SupportScreen() {
   const { settings } = useStore()
   const links = contactLinks(settings, "مرحبا، عندي استفسار")
   return (
-    <View style={{ flex: 1, backgroundColor: "#fafafa" }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.pageAlt }}>
       <Header title="الدعم" />
       <View style={{ padding: 24, gap: 16 }}>
         <View style={styles.bubble}>

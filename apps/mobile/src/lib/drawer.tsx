@@ -4,7 +4,7 @@ import { Animated, Dimensions, Pressable, StyleSheet, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import Icon, { IconName } from "../components/Icon"
 import Text from "../components/Text"
-import { COLORS } from "./config"
+import { COLORS, IS_NATURAL } from "./config"
 import { useStore } from "./store"
 
 const DrawerContext = createContext<{ open: () => void; close: () => void }>({ open: () => undefined, close: () => undefined })
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     // "start" = right edge in RTL (native swaps left/right, web follows dir="rtl")
     start: 0,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.card,
     borderTopEndRadius: 30,
     borderBottomEndRadius: 30,
     paddingHorizontal: 14,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: "700" },
   sub: { fontSize: 12, color: COLORS.muted, marginTop: 2, textAlign: "left" },
   item: { flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 16, height: 48, borderRadius: 10 },
-  itemActive: { backgroundColor: "#f3f3f3" },
+  itemActive: { backgroundColor: IS_NATURAL ? "#eef5dc" : "#f3f3f3" },
   itemText: { fontSize: 15, color: COLORS.muted, fontWeight: "500" },
   section: { fontSize: 13, color: COLORS.muted, marginTop: 28, marginBottom: 8, paddingHorizontal: 16 },
 })

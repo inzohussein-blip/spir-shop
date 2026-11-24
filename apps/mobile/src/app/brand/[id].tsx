@@ -7,7 +7,7 @@ import { BackButton } from "../../components/Header"
 import { CategoryIcon } from "../../components/Icon"
 import Text from "../../components/Text"
 import { Brand, listBrands, listProducts, Product } from "../../lib/api"
-import { COLORS } from "../../lib/config"
+import { COLORS, RADIUS } from "../../lib/config"
 
 const HEIGHTS = [[250, 230], [200, 230], [230, 210], [210, 250]]
 
@@ -95,9 +95,9 @@ const styles = StyleSheet.create({
   coverText: { position: "absolute", top: 0, bottom: 30, end: 24, maxWidth: "55%", justifyContent: "center" },
   brand: { color: "#fff", fontSize: 28, fontWeight: "700", lineHeight: 36, textAlign: "left" },
   origin: { color: "#fff", fontSize: 14, marginTop: 4, textAlign: "left" },
-  sheet: { marginTop: -26, backgroundColor: "#fff", borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 20, paddingTop: 26 },
+  sheet: { marginTop: -26, backgroundColor: COLORS.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 20, paddingTop: 26 },
   wall: { flexDirection: "row", gap: 14, alignItems: "flex-start" },
-  tile: { borderRadius: 6, backgroundColor: "#f3f3f3", overflow: "hidden", alignItems: "center", justifyContent: "center" },
-  viewAll: { position: "absolute", end: 0, backgroundColor: "#000", height: 54, paddingHorizontal: 38, borderTopStartRadius: 27, borderBottomStartRadius: 27, alignItems: "center", justifyContent: "center" },
+  tile: { borderRadius: RADIUS.image - 6, backgroundColor: COLORS.soft, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  viewAll: { position: "absolute", end: 0, backgroundColor: COLORS.dark, height: 54, paddingHorizontal: 38, borderTopStartRadius: 27, borderBottomStartRadius: 27, alignItems: "center", justifyContent: "center" },
   viewAllText: { color: "#fff", fontSize: 15, fontWeight: "700", letterSpacing: 0.5 },
 })

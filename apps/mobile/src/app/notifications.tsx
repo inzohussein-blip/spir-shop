@@ -26,13 +26,13 @@ export default function NotificationsScreen() {
   }, [address?.province, markNotificationsSeen])
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fafafa" }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.pageAlt }}>
       <Header title="الإشعارات" />
       {!items ? (
         <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
       ) : (
     <FlatList
-      style={{ backgroundColor: "#f9f9f9" }}
+      style={{ backgroundColor: COLORS.pageAlt }}
       data={items}
       keyExtractor={(n) => n.id}
       contentContainerStyle={{ paddingHorizontal: 30, paddingTop: 14, paddingBottom: 30, gap: 30 }}
@@ -61,7 +61,7 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 22, paddingVertical: 20, gap: 8, borderWidth: 1, borderColor: "#f0f0f0", ...SHADOW, shadowOpacity: 0.04 },
+  card: { backgroundColor: COLORS.card, borderRadius: RADIUS.card - 6, paddingHorizontal: 22, paddingVertical: 20, gap: 8, borderWidth: 1, borderColor: "#f0f0f0", ...SHADOW, shadowOpacity: 0.04 },
   title: { fontSize: 15, fontWeight: "500" },
   body: { fontSize: 13, color: "#6b6b6b", lineHeight: 21 },
   date: { fontSize: 11, color: "#c4c4c4" },

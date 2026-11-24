@@ -8,7 +8,7 @@ import Icon, { CategoryIcon, HeartIcon } from "../components/Icon"
 import ProductCard from "../components/ProductCard"
 import Text from "../components/Text"
 import { listProducts, Product } from "../lib/api"
-import { COLORS } from "../lib/config"
+import { COLORS, IS_NATURAL } from "../lib/config"
 import { useStore } from "../lib/store"
 
 type Board = { key: string; title: string; products: Product[] }
@@ -154,12 +154,12 @@ export default function WishlistScreen() {
 }
 
 const styles = StyleSheet.create({
-  segment: { flexDirection: "row", marginHorizontal: 34, marginBottom: 18, borderWidth: 1.2, borderColor: "#000" },
-  segBtn: { flex: 1, height: 34, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
-  segActive: { backgroundColor: "#000" },
-  segText: { fontSize: 15, fontWeight: "700", color: "#000" },
+  segment: { flexDirection: "row", marginHorizontal: 34, marginBottom: 18, borderWidth: 1.2, borderColor: COLORS.dark, borderRadius: IS_NATURAL ? 12 : 0, overflow: "hidden" },
+  segBtn: { flex: 1, height: 34, alignItems: "center", justifyContent: "center", backgroundColor: COLORS.card },
+  segActive: { backgroundColor: COLORS.dark },
+  segText: { fontSize: 15, fontWeight: "700", color: COLORS.dark },
   collage: { flexDirection: "row", gap: 4, height: 128, borderRadius: 10, overflow: "hidden" },
-  tile: { backgroundColor: "#f3f3f3", overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  tile: { backgroundColor: COLORS.soft, overflow: "hidden", alignItems: "center", justifyContent: "center" },
   boardRow: { flexDirection: "row", alignItems: "center", paddingTop: 14, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: "#ececec" },
   boardTitle: { fontSize: 20, fontWeight: "700" },
   boardCount: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
