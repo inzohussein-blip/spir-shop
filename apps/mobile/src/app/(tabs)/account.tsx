@@ -11,7 +11,7 @@ import { useStore } from "../../lib/store"
 export default function AccountScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
-  const { address, addresses, orderIds, wishlist, deleteAddress } = useStore()
+  const { address, addresses, orderIds, wishlist, deleteAddress, features } = useStore()
   const name = address ? `${address.firstName} ${address.lastName}`.trim() : "أهلاً بك"
   const initial = address?.firstName?.trim()?.[0] ?? "S"
 
@@ -26,14 +26,15 @@ export default function AccountScreen() {
     ])
   }
 
-  const rows: { icon: IconName; label: string; hint?: string; onPress: () => void; testID?: string }[] = [
+  const allRows: ({ icon: IconName; label: string; hint?: string; onPress: () => void; testID?: string } | false)[] = [
     { icon: "map-pin", label: "عنوان التوصيل", hint: address?.label, onPress: () => router.push("/address"), testID: "account-address" },
     { icon: "package", label: "طلباتي", hint: orderIds.length ? String(orderIds.length) : undefined, onPress: () => router.push("/orders"), testID: "account-orders" },
     { icon: "credit-card", label: "طريقة الدفع", hint: "عند الاستلام", onPress: () => router.push("/about") },
-    { icon: "heart", label: "المفضلة", hint: wishlist.length ? String(wishlist.length) : undefined, onPress: () => router.push("/wishlist"), testID: "account-wishlist" },
+    features.wishlist && { icon: "heart", label: "المفضلة", hint: wishlist.length ? String(wishlist.length) : undefined, onPress: () => router.push("/wishlist"), testID: "account-wishlist" },
     { icon: "star", label: "قيّمي التطبيق", onPress: () => router.push("/feedback"), testID: "account-feedback" },
     { icon: "log-out", label: "مسح بياناتي من الجهاز", onPress: clearData },
   ]
+  const rows = allRows.filter((r): r is Exclude<(typeof allRows)[number], false> => !!r)
 
   return (
     <ScrollView style={{ backgroundColor: COLORS.bg }} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: insets.top + 50, paddingBottom: 30 + TAB_SPACE, gap: 40 }}>

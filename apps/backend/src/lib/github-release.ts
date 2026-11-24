@@ -7,23 +7,28 @@
  * also needs auth, so a public repo is the practical choice).
  *
  * Conventions used by the workflow:
- *   - tag "v1.2.3" -> version "1.2.3"
+ *   - tag "v1.2.3" -> version "1.2.3" (default store)
+ *   - tag "glow-v1.2.3" -> version "1.2.3" of the "glow" store's app
  *   - an asset ending in ".apk" is the download
  *   - "[required]" in the release notes makes the update mandatory
  */
 export type GithubRelease = { version: string; apkUrl: string; required: boolean; notes: string }
 
 const CACHE_MS = 10 * 60 * 1000
-let cache: { at: number; value: GithubRelease | null } | null = null
+const cache = new Map<string, { at: number; value: GithubRelease | null }>()
 
-export async function getLatestGithubRelease(): Promise<GithubRelease | null> {
+/** Latest release of a store's app: tags "vX.Y.Z" for the default store, "<slug>-vX.Y.Z" for the others. */
+export async function getLatestGithubRelease(storeSlug?: string | null): Promise<GithubRelease | null> {
   const repo = process.env.MOBILE_GITHUB_REPO
   if (!repo) return null
-  if (cache && Date.now() - cache.at < CACHE_MS) return cache.value
+  const key = storeSlug ?? ""
+  const hit = cache.get(key)
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value
+  const prefix = storeSlug ? `${storeSlug}-v` : "v"
 
   let value: GithubRelease | null = null
   try {
-    const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
+    const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=50`, {
       headers: {
         accept: "application/vnd.github+json",
         "user-agent": "spir-shop-backend",
@@ -31,16 +36,21 @@ export async function getLatestGithubRelease(): Promise<GithubRelease | null> {
       },
     })
     if (res.ok) {
-      const r = (await res.json()) as {
+      type Rel = {
         tag_name: string
         body: string | null
         draft: boolean
         prerelease: boolean
         assets: { name: string; browser_download_url: string }[]
       }
-      const apk = r.assets.find((a) => a.name.toLowerCase().endsWith(".apk"))
-      const version = r.tag_name.replace(/^v/i, "")
-      if (apk && !r.draft && !r.prerelease && /^\d+\.\d+\.\d+$/.test(version)) {
+      const list = (await res.json()) as Rel[]
+      const mine = list
+        .filter((x) => !x.draft && !x.prerelease && x.tag_name.startsWith(prefix) && /^\d+\.\d+\.\d+$/.test(x.tag_name.slice(prefix.length)))
+        .sort((a, b) => compareVersions(b.tag_name.slice(prefix.length), a.tag_name.slice(prefix.length)))
+      const r = mine[0]
+      const apk = r?.assets.find((a) => a.name.toLowerCase().endsWith(".apk"))
+      const version = r ? r.tag_name.slice(prefix.length) : ""
+      if (r && apk) {
         const notes = (r.body ?? "").replace(/\[required\]/gi, "").trim()
         value = {
           version,
@@ -53,7 +63,7 @@ export async function getLatestGithubRelease(): Promise<GithubRelease | null> {
   } catch {
     // GitHub unreachable: keep serving the admin-defined values
   }
-  cache = { at: Date.now(), value }
+  cache.set(key, { at: Date.now(), value })
   return value
 }
 

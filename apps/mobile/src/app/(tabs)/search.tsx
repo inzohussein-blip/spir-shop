@@ -8,6 +8,7 @@ import Icon from "../../components/Icon"
 import Text from "../../components/Text"
 import { Brand, Category, countProducts, listAllCategories, listBrands, listProducts } from "../../lib/api"
 import { COLORS, SHADOW, TAB_SPACE } from "../../lib/config"
+import { useStore } from "../../lib/store"
 
 if (Platform.OS === "android") UIManager.setLayoutAnimationEnabledExperimental?.(true)
 
@@ -49,6 +50,7 @@ function DiscoverCard({ card, open, onToggle }: { card: Card; open: boolean; onT
 /** Discover (design: "discover"): search, filter, then a coloured card per category. */
 export default function DiscoverScreen() {
   const router = useRouter()
+  const showBrands = useStore().features.brands
   const [cards, setCards] = useState<Card[]>([])
   const [open, setOpen] = useState<string | null>(null)
 
@@ -74,7 +76,7 @@ export default function DiscoverScreen() {
           ],
         }
       })
-      if (brands.length) {
+      if (brands.length && showBrands) {
         list.push({
           key: "brands",
           title: "العلامات التجارية",
@@ -103,7 +105,7 @@ export default function DiscoverScreen() {
       )
       setCards(counted)
     })()
-  }, [])
+  }, [showBrands])
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.bg }}>

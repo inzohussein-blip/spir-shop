@@ -7,6 +7,7 @@ import SearchBar from "../../components/SearchBar"
 import Text from "../../components/Text"
 import { COLORS, IS_NATURAL, TAB_SPACE } from "../../lib/config"
 import { useLayout } from "../../lib/layout"
+import { useStore } from "../../lib/store"
 import BlockRenderer from "../../sdui/Renderer"
 
 /**
@@ -16,6 +17,7 @@ import BlockRenderer from "../../sdui/Renderer"
 export default function Home() {
   const router = useRouter()
   const { blocks, error, refresh, preview } = useLayout("home")
+  const { tenant } = useStore()
   const [refreshing, setRefreshing] = useState(false)
 
   const onRefresh = async () => {
@@ -26,7 +28,7 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
-      <Header variant="menu" title="Spir Shop" />
+      <Header variant="menu" title={tenant?.branding.app_name ?? "Spir Shop"} />
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 40 + TAB_SPACE }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -52,7 +54,7 @@ export default function Home() {
         ) : error ? (
           <View style={{ gap: 16, marginTop: 40 }}>
             <Text style={styles.empty}>تعذّر الاتصال بالمتجر. اسحب للأسفل لإعادة المحاولة.</Text>
-            <Button label="إعدادات الخادم" variant="outline" onPress={() => router.push("/server")} testID="open-server" />
+            <Button label="إعادة المحاولة" variant="outline" onPress={refresh} testID="retry" />
           </View>
         ) : (
           <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />

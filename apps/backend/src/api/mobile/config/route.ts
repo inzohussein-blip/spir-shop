@@ -1,5 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { listTenants } from "../../../lib/tenant"
 
 /**
  * GET /mobile/config - lets the app discover the store's publishable API key
@@ -20,6 +21,15 @@ export const OPTIONS = async (req: MedusaRequest, res: MedusaResponse) => {
 
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   cors(req, res)
+  // ?store=<slug>: the app of that store (multi-store server)
+  const slug = String(req.query.store ?? "")
+  const tenants = await listTenants(req.scope).catch(() => [])
+  const tenant = (slug && tenants.find((t) => t.slug === slug)) || tenants.find((t) => t.is_default)
+  if (tenant) {
+    res.setHeader("Cache-Control", "public, max-age=300")
+    res.json({ publishable_key: tenant.status === "active" ? tenant.api_key_token : null, store: tenant.slug })
+    return
+  }
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const { data: keys } = await query.graph({
     entity: "api_key",

@@ -1,39 +1,39 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import Constants from "expo-constants"
 import { reloadAppAsync } from "expo"
 import { Platform } from "react-native"
 import { readThemeName, writeThemeName } from "./theme-store"
 
-/** Backend address baked in at build time (EXPO_PUBLIC_MEDUSA_BACKEND_URL). */
-export const DEFAULT_BACKEND_URL = (process.env.EXPO_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000").replace(/\/$/, "")
-
-const BACKEND_KEY = "spir_backend_url"
-let backendUrl = DEFAULT_BACKEND_URL
+/**
+ * The shared server every store's app talks to. Set at build time with
+ * EXPO_PUBLIC_MEDUSA_BACKEND_URL; release builds fall back to the public
+ * server, development to the computer running the backend.
+ */
+const PUBLIC_SERVER = "https://backend-production-eb711937.up.railway.app"
+export const BACKEND_URL = (
+  process.env.EXPO_PUBLIC_MEDUSA_BACKEND_URL || (__DEV__ ? "http://localhost:9000" : PUBLIC_SERVER)
+).replace(/\/$/, "")
+export const getBackendUrl = () => BACKEND_URL
 
 /**
- * Current backend address. It can be changed inside the app (server settings
- * screen), e.g. to test an APK against a computer on the same Wi-Fi.
+ * Which store this app belongs to (stores/<slug>.json, chosen at build time).
+ * On the web build "?store=<slug>" switches it, for previews of other stores.
  */
-export const getBackendUrl = () => backendUrl
-
-export async function loadBackendUrl() {
-  try {
-    const saved = await AsyncStorage.getItem(BACKEND_KEY)
-    if (saved) backendUrl = saved
-  } catch {
-    // keep the default
+function readStoreSlug(): string {
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    try {
+      const q = new URLSearchParams(window.location.search).get("store")
+      if (q) window.localStorage.setItem("spir_store", q)
+      const saved = window.localStorage.getItem("spir_store")
+      if (saved) return saved
+    } catch {
+      // ignore
+    }
   }
+  const extra = Constants.expoConfig?.extra as { store?: string } | undefined
+  return extra?.store || process.env.EXPO_PUBLIC_STORE || "spir"
 }
+export const STORE_SLUG = readStoreSlug()
 
-export async function saveBackendUrl(url: string | null) {
-  const clean = url?.trim().replace(/\/$/, "")
-  if (clean) {
-    await AsyncStorage.setItem(BACKEND_KEY, clean)
-    backendUrl = clean
-  } else {
-    await AsyncStorage.removeItem(BACKEND_KEY)
-    backendUrl = DEFAULT_BACKEND_URL
-  }
-}
 export const PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
 
 /* --------------------------------- themes --------------------------------- */

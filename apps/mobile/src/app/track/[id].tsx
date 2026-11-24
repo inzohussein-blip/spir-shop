@@ -6,6 +6,7 @@ import Header from "../../components/Header"
 import Text from "../../components/Text"
 import { AppOrder, getOrders } from "../../lib/api"
 import { COLORS } from "../../lib/config"
+import { useStore } from "../../lib/store"
 import { shortDate, stepTime, trackingCode } from "../../lib/order-labels"
 
 /** Track order (design: "track order"): newest step first, dotted timeline, rate reminder. */
@@ -13,6 +14,7 @@ export default function TrackOrder() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const [order, setOrder] = useState<AppOrder | null | undefined>(undefined)
+  const { features } = useStore()
 
   useEffect(() => {
     getOrders([id])
@@ -82,7 +84,7 @@ export default function TrackOrder() {
           )}
         </View>
 
-        {delivered && item ? (
+        {delivered && item && features.reviews ? (
           <View style={styles.rateCard}>
             <MaterialCommunityIcons name="gesture-tap" size={44} color="#3a3a3a" />
             <View style={{ flex: 1, gap: 6 }}>

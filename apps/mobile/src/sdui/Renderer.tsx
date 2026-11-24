@@ -1,6 +1,7 @@
 import { Component, ComponentType, ReactNode } from "react"
 import { View } from "react-native"
-import type { Block } from "../lib/api"
+import type { Block, Features } from "../lib/api"
+import { useStore } from "../lib/store"
 import { CountdownOffer, Heading, HeroBanner, Spacer } from "./blocks/simple"
 import { CategoryChips, ProductCarousel, ProductGrid } from "./blocks/products"
 import { StoryBar, VideoBanner } from "./blocks/media"
@@ -43,7 +44,12 @@ class BlockBoundary extends Component<{ children: ReactNode }, { failed: boolean
   }
 }
 
+/** Blocks hidden when the store switched the matching feature off. */
+const FEATURE_OF: Record<string, keyof Features> = { story_bar: "stories", brand_strip: "brands", flash_sale: "flash_sale" }
+
 export default function BlockRenderer({ blocks }: { blocks: Block[] }) {
+  const { features } = useStore()
+  blocks = blocks.filter((b) => !FEATURE_OF[b.type] || features[FEATURE_OF[b.type]])
   return (
     <View style={{ gap: 28 }}>
       {blocks.map((block) => {

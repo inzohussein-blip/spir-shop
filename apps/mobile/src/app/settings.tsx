@@ -15,7 +15,6 @@ export default function SettingsScreen() {
     { icon: "file-text", label: "الشروط والأحكام", onPress: () => router.push({ pathname: "/about", params: { section: "terms" } }) },
     { icon: "info", label: "سياسة الخصوصية", onPress: () => router.push({ pathname: "/about", params: { section: "privacy" } }) },
     { icon: "send", label: "الدعم والمحادثة", onPress: () => router.push("/support") },
-    { icon: "server", label: "إعدادات الخادم", onPress: () => router.push("/server") },
   ]
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.bg }}>

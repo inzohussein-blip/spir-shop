@@ -42,5 +42,8 @@ GRADLE_ARGS+=("-Dorg.gradle.internal.repository.max.retries=8" "-Dorg.gradle.int
 (cd android && ./gradlew assembleRelease --no-daemon --max-workers="${GRADLE_WORKERS:-3}" "${GRADLE_ARGS[@]}" -PreactNativeArchitectures="$ARCHS")
 
 mkdir -p dist
-cp android/app/build/outputs/apk/release/app-release.apk "dist/spir-shop-$VERSION.apk"
-echo "APK: $(pwd)/dist/spir-shop-$VERSION.apk"
+# APP_STORE picks the store (stores/<slug>.json); the default store keeps the old file name
+NAME="spir-shop"
+[ -n "$APP_STORE" ] && [ "$APP_STORE" != "spir" ] && NAME="$APP_STORE"
+cp android/app/build/outputs/apk/release/app-release.apk "dist/$NAME-$VERSION.apk"
+echo "APK: $(pwd)/dist/$NAME-$VERSION.apk"

@@ -52,7 +52,7 @@ function PriceLine({ product, size = 15 }: { product: Product; size?: number }) 
  *  - "compact" (home "recommended"): small image beside name and price
  */
 export default function ProductCard({ product, variant = "grid" }: { product: Product; variant?: "grid" | "featured" | "compact" }) {
-  const { isWished, toggleWish, ratings, requestRatings } = useStore()
+  const { isWished, toggleWish, ratings, requestRatings, features } = useStore()
   useEffect(() => {
     if (variant === "grid") requestRatings([product.id])
   }, [product.id, requestRatings, variant])
@@ -80,6 +80,7 @@ export default function ProductCard({ product, variant = "grid" }: { product: Pr
       <Link href={`/product/${product.handle}`} asChild>
         <Pressable style={variant === "featured" ? styles.nFeatured : styles.nCard} testID={`product-${product.handle}`}>
           <Thumb product={product} style={styles.nImg} />
+          {features.wishlist ? (
           <Pressable
             style={styles.nHeart}
             onPress={(e) => {
@@ -92,12 +93,13 @@ export default function ProductCard({ product, variant = "grid" }: { product: Pr
           >
             <HeartIcon filled={isWished(product.id)} size={16} color={COLORS.primaryDark} />
           </Pressable>
+          ) : null}
           <View style={{ padding: 10, gap: 4 }}>
             <Text style={styles.title} numberOfLines={1}>
               {product.title}
             </Text>
             <PriceLine product={product} />
-            {variant === "grid" && rating?.count ? <Stars value={rating.average} count={rating.count} size={10} /> : null}
+            {features.reviews && variant === "grid" && rating?.count ? <Stars value={rating.average} count={rating.count} size={10} /> : null}
           </View>
         </Pressable>
       </Link>
@@ -125,6 +127,7 @@ export default function ProductCard({ product, variant = "grid" }: { product: Pr
       <Pressable style={styles.card} testID={`product-${product.handle}`}>
         <View>
           <Thumb product={product} style={styles.gridImg} />
+          {features.wishlist ? (
           <Pressable
             style={styles.heart}
             onPress={(e) => {
@@ -137,12 +140,13 @@ export default function ProductCard({ product, variant = "grid" }: { product: Pr
           >
             <HeartIcon filled={wished} size={15} color="#d3d6da" solid />
           </Pressable>
+          ) : null}
         </View>
         <Text style={styles.title} numberOfLines={1}>
           {product.title}
         </Text>
         <PriceLine product={product} />
-        {rating?.count ? <Stars value={rating.average} count={rating.count} size={10} /> : null}
+        {features.reviews && rating?.count ? <Stars value={rating.average} count={rating.count} size={10} /> : null}
       </Pressable>
     </Link>
   )

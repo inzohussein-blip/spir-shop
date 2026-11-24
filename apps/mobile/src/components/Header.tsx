@@ -34,13 +34,14 @@ function Round({ children }: { children: ReactNode }) {
 
 export function BellButton() {
   const router = useRouter()
-  const { address, notificationsSeenAt } = useStore()
+  const { address, notificationsSeenAt, features } = useStore()
   const [unread, setUnread] = useState(false)
   useEffect(() => {
     getNotifications(address?.province)
       .then((list) => setUnread(list.some((n) => new Date(n.sent_at).getTime() > notificationsSeenAt)))
       .catch(() => undefined)
   }, [address?.province, notificationsSeenAt])
+  if (!features.notifications) return null
   return (
     <Pressable onPress={() => router.push("/notifications")} hitSlop={8} accessibilityLabel="الإشعارات" testID="open-notifications">
       <Round>

@@ -1,6 +1,7 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { compareVersions, getLatestGithubRelease } from "../../../lib/github-release"
+import { tenantFromStoreRequest } from "../../../lib/tenant"
 
 /**
  * GET /store/mobile-version  (needs the publishable API key header, like all /store routes)
@@ -21,12 +22,14 @@ import { compareVersions, getLatestGithubRelease } from "../../../lib/github-rel
  * version tag is enough to ship an update to every installed app.
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
+  const tenant = await tenantFromStoreRequest(req)
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const {
     data: [store],
   } = await query.graph({ entity: "store", fields: ["metadata"], pagination: { take: 1 } })
 
-  const meta = (store?.metadata ?? {}) as Record<string, unknown>
+  // admin-defined values belong to the default store's app; other stores use their own GitHub releases
+  const meta = (tenant.is_default ? store?.metadata ?? {} : {}) as Record<string, unknown>
   const pick = (key: string, env: string, fallback = "") =>
     String(meta[key] ?? process.env[env] ?? fallback)
 
@@ -39,7 +42,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     source: "admin" as "admin" | "github",
   }
 
-  const gh = await getLatestGithubRelease()
+  const gh = await getLatestGithubRelease(tenant.is_default ? null : tenant.slug)
   if (gh && compareVersions(gh.version, info.latest_version) > 0) {
     info.latest_version = gh.version
     info.android_url = gh.apkUrl

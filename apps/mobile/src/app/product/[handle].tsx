@@ -47,7 +47,7 @@ export default function ProductScreen() {
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
   const { addItem, loading } = useCart()
-  const { isWished, toggleWish } = useStore()
+  const { isWished, toggleWish, features } = useStore()
   const [product, setProduct] = useState<Product | null>(null)
   const [similar, setSimilar] = useState<Product[]>([])
   const [reviews, setReviews] = useState<{ summary: ReviewSummary; reviews: Review[] } | null>(null)
@@ -143,9 +143,11 @@ export default function ProductScreen() {
           <Text style={styles.body}>{ingredients}</Text>
         </Collapsible>
       ) : null}
+      {features.reviews ? (
       <Collapsible title="التقييمات" open={open.includes("reviews")} onToggle={() => toggle("reviews")} testID="tab-reviews">
         <ReviewsPanel data={reviews} onWrite={() => router.push("/orders")} />
       </Collapsible>
+      ) : null}
       {similar.length ? (
         <Collapsible title="منتجات مشابهة" open={open.includes("similar")} onToggle={() => toggle("similar")} testID="tab-similar">
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 12, paddingHorizontal: 20 }}>
@@ -198,16 +200,16 @@ export default function ProductScreen() {
             <Text style={n.kind}>{product.categories?.[0]?.name ?? ""}</Text>
             <View style={n.titleRow}>
               <Text style={n.title}>{product.title}</Text>
-              <Pressable style={n.round} onPress={() => toggleWish(product.id)} accessibilityLabel="المفضلة" testID="product-wish">
+              {features.wishlist ? <Pressable style={n.round} onPress={() => toggleWish(product.id)} accessibilityLabel="المفضلة" testID="product-wish">
                 <HeartIcon filled={isWished(product.id)} size={20} color={COLORS.primaryDark} />
-              </Pressable>
+              </Pressable> : null}
             </View>
-            {reviews?.summary.count ? (
+            {features.reviews && reviews?.summary.count ? (
               <Pressable onPress={() => !open.includes("reviews") && toggle("reviews")} style={{ marginTop: 6 }}>
                 <Stars value={reviews.summary.average} count={reviews.summary.count} size={15} gap={2} />
               </Pressable>
             ) : null}
-            {product.collection ? (
+            {features.brands && product.collection ? (
               <View style={n.brandRow}>
                 <View style={n.logo}>
                   <Text style={n.logoText}>{brandInitials || "S"}</Text>
@@ -305,9 +307,9 @@ export default function ProductScreen() {
           ) : null}
           <View style={[styles.topBar, { top: insets.top + 12 }]}>
             <BackButton />
-            <Pressable style={styles.heartBtn} onPress={() => toggleWish(product.id)} accessibilityLabel="المفضلة" testID="product-wish">
+            {features.wishlist ? <Pressable style={styles.heartBtn} onPress={() => toggleWish(product.id)} accessibilityLabel="المفضلة" testID="product-wish">
               <HeartIcon filled={isWished(product.id)} size={20} color="#ff6464" />
-            </Pressable>
+            </Pressable> : <View />}
           </View>
         </View>
 
@@ -315,7 +317,7 @@ export default function ProductScreen() {
           <View style={styles.titleRow}>
             <View style={{ flex: 1, gap: 10 }}>
               <Text style={styles.title}>{product.title}</Text>
-              {reviews?.summary.count ? (
+              {features.reviews && reviews?.summary.count ? (
                 <Pressable onPress={() => !open.includes("reviews") && toggle("reviews")}>
                   <Stars value={reviews.summary.average} count={reviews.summary.count} size={19} gap={3} />
                 </Pressable>
@@ -396,9 +398,11 @@ export default function ProductScreen() {
               <Text style={styles.body}>{ingredients}</Text>
             </Collapsible>
           ) : null}
+          {features.reviews ? (
           <Collapsible title="التقييمات" open={open.includes("reviews")} onToggle={() => toggle("reviews")} testID="tab-reviews">
             <ReviewsPanel data={reviews} onWrite={() => router.push("/orders")} />
           </Collapsible>
+          ) : null}
           {similar.length ? (
             <Collapsible title="منتجات مشابهة" open={open.includes("similar")} onToggle={() => toggle("similar")} testID="tab-similar">
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -24 }} contentContainerStyle={{ gap: 16, paddingHorizontal: 24 }}>

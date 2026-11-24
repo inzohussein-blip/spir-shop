@@ -23,7 +23,7 @@ const BANNER: Record<string, { title: string; icon: string }> = {
 export default function OrderInfo() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
-  const { settings } = useStore()
+  const { settings, features } = useStore()
   const { addItem } = useCart()
   const [order, setOrder] = useState<AppOrder | null | undefined>(undefined)
   const [reordering, setReordering] = useState(false)
@@ -76,7 +76,7 @@ export default function OrderInfo() {
           <View style={{ flex: 1, gap: 6 }}>
             <Text style={styles.bannerTitle}>{banner.title}</Text>
             <Text style={styles.bannerSub}>
-              {delivered ? "قيّمي المنتجات وساعدي غيرك يختار." : canceled ? "تواصلي معنا إذا عندك أي استفسار." : `يوصلك ${eta} • الدفع عند الاستلام`}
+              {delivered ? (features.reviews ? "قيّمي المنتجات وساعدي غيرك يختار." : "شكراً لتسوقك معنا.") : canceled ? "تواصلي معنا إذا عندك أي استفسار." : `يوصلك ${eta} • الدفع عند الاستلام`}
             </Text>
           </View>
           <MaterialCommunityIcons name={banner.icon as never} size={48} color="#fff" />
@@ -121,7 +121,7 @@ export default function OrderInfo() {
           <Pressable style={[styles.btn, styles.btnOutline]} onPress={() => (delivered || canceled ? router.replace("/") : reorder())} testID="order-secondary">
             <Text style={{ fontSize: 15, color: "#6b6b8a" }}>{delivered || canceled ? "العودة للرئيسية" : reordering ? "..." : "اطلبيه مرة ثانية"}</Text>
           </Pressable>
-          {delivered && firstToRate ? (
+          {delivered && firstToRate && features.reviews ? (
             <Pressable
               style={[styles.btn, styles.btnDark]}
               onPress={() => router.push({ pathname: "/rate", params: { product_id: firstToRate.product_id, order_id: order.id, title: firstToRate.product_title || firstToRate.title } })}

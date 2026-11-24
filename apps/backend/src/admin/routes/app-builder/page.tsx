@@ -4,7 +4,7 @@ import { Button, Text, toast } from "@medusajs/ui"
 import { Puck, type Config, type Data } from "@puckeditor/core"
 import "@puckeditor/core/puck.css"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { adminFetch, Block, Option } from "../../lib/api"
+import { adminFetch, Block, currentTenantId, Option } from "../../lib/api"
 import { buildConfig, fromPuckData, toPuckData } from "../../lib/builder-config"
 import { TenantBar } from "../../components/tenant-bar"
 
@@ -42,6 +42,18 @@ const AppBuilderPage = () => {
   const [showPhone, setShowPhone] = useState(true)
   const [previewUrl, setPreviewUrl] = useState(readPreviewUrl)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  // the preview shows the store selected in the store switcher
+  const [storeSlug, setStoreSlug] = useState("")
+  useEffect(() => {
+    adminFetch<{ tenants: { id: string; slug: string; is_default: boolean }[] }>("/admin/app-tenants")
+      .then((r) => {
+        const id = currentTenantId()
+        const t = r.tenants.find((x) => x.id === id) ?? r.tenants.find((x) => x.is_default)
+        if (t) setStoreSlug(t.slug)
+      })
+      .catch(() => undefined)
+  }, [])
+  const previewSrc = storeSlug ? `${previewUrl}${previewUrl.includes("?") ? "&" : "?"}store=${storeSlug}` : previewUrl
   const latest = useRef<Block[]>([])
 
   const loadVersions = useCallback(async () => {
@@ -208,7 +220,7 @@ const AppBuilderPage = () => {
               <iframe
                 ref={iframeRef}
                 title="app-preview"
-                src={previewUrl}
+                src={previewSrc}
                 onLoad={() => setTimeout(pushPreview, 1500)}
                 style={{ width: "100%", height: "100%", border: 0 }}
               />

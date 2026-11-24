@@ -1,0 +1,8 @@
+{
+  "slug": "glow",
+  "app_name": "Glow Nature",
+  "android_package": "com.spirshop.glow",
+  "ios_bundle": "com.spirshop.glow",
+  "scheme": "glownature",
+  "splash_background": "#eef5dc"
+}

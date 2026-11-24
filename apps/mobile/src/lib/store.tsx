@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
-import { AppSettings, getAppSettings, getRatings, Rating } from "./api"
+import { AppSettings, Features, getRatings, getTenant, Rating, TenantInfo } from "./api"
 import { rememberStoreTheme } from "./config"
 import { rememberProvince } from "./push"
 
@@ -44,7 +44,13 @@ const DEFAULT_SETTINGS: AppSettings = {
   trust_badges: ["أصلي 100%", "توصيل لكل المحافظات", "الدفع عند الاستلام"],
 }
 
+const DEFAULT_FEATURES: Features = { wishlist: true, reviews: true, stories: true, coupons: true, brands: true, notifications: true, flash_sale: true }
+const TENANT_CACHE = "spir_tenant"
+
 type StoreValue = {
+  /** this app's store: name, logo, theme, features (from the server, cached for offline) */
+  tenant: TenantInfo | null
+  features: Features
   /** the selected delivery address */
   address: AddressEntry | null
   /** save into the selected address (or create the first one) */
@@ -83,6 +89,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [wishlist, setWishlist] = useState<string[]>([])
   const [orderIds, setOrderIds] = useState<string[]>([])
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
+  const [tenant, setTenant] = useState<TenantInfo | null>(null)
   const [seenAt, setSeenAt] = useState(0)
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
   const requested = useRef(new Set<string>())
@@ -109,10 +116,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     readJson<string[]>(KEYS.wishlist, []).then(setWishlist)
     readJson<string[]>(KEYS.orders, []).then(setOrderIds)
     readJson<number>(KEYS.notificationsSeen, 0).then(setSeenAt)
-    getAppSettings()
-      .then((st) => {
-        setSettings(st)
-        rememberStoreTheme(st.default_theme)
+    const applyTenant = (t: TenantInfo) => {
+      setTenant(t)
+      setSettings({ ...DEFAULT_SETTINGS, ...t.settings })
+      // the store's look; used from the next launch unless the customer picked one
+      rememberStoreTheme(t.branding.theme)
+    }
+    readJson<TenantInfo | null>(TENANT_CACHE, null).then((t) => t && applyTenant(t))
+    getTenant()
+      .then((t) => {
+        applyTenant(t)
+        writeJson(TENANT_CACHE, t)
       })
       .catch(() => undefined)
   }, [])
@@ -207,8 +221,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }, 120)
   }, [])
 
+  const features = useMemo(() => ({ ...DEFAULT_FEATURES, ...(tenant?.features ?? {}) }), [tenant])
+
   const value = useMemo<StoreValue>(
     () => ({
+      tenant,
+      features,
       address,
       saveAddress,
       addresses,
@@ -226,7 +244,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ratings,
       requestRatings,
     }),
-    [address, saveAddress, addresses, upsertAddress, deleteAddress, selectAddress, wishlist, toggleWish, orderIds, addOrder, settings, seenAt, markNotificationsSeen, ratings, requestRatings]
+    [tenant, features, address, saveAddress, addresses, upsertAddress, deleteAddress, selectAddress, wishlist, toggleWish, orderIds, addOrder, settings, seenAt, markNotificationsSeen, ratings, requestRatings]
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

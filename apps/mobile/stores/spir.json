@@ -1,0 +1,8 @@
+{
+  "slug": "spir",
+  "app_name": "Spir Shop",
+  "android_package": "com.spirshop.app",
+  "ios_bundle": "com.spirshop.app",
+  "scheme": "spirshop",
+  "splash_background": "#fbeeec"
+}

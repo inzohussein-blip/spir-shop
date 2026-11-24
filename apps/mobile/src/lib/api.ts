@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { getBackendUrl, PUBLISHABLE_KEY } from "./config"
+import { getBackendUrl, PUBLISHABLE_KEY, STORE_SLUG } from "./config"
 
 /**
  * Publishable key: baked in at build time when EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY
@@ -8,11 +8,12 @@ import { getBackendUrl, PUBLISHABLE_KEY } from "./config"
  */
 let discoveredKey: { base: string; key: string } | null = null
 async function publishableKey(base: string): Promise<string> {
-  if (PUBLISHABLE_KEY) return PUBLISHABLE_KEY
+  // A key baked in at build time (local development) is skipped when a web preview picks another store
+  if (PUBLISHABLE_KEY && !isWebOverride()) return PUBLISHABLE_KEY
   if (discoveredKey?.base === base) return discoveredKey.key
-  const cacheKey = `spir_pk_${base}`
+  const cacheKey = `spir_pk_${base}_${STORE_SLUG}`
   try {
-    const res = await fetch(`${base}/mobile/config`)
+    const res = await fetch(`${base}/mobile/config?store=${encodeURIComponent(STORE_SLUG)}`)
     const json = (await res.json()) as { publishable_key?: string | null }
     if (json.publishable_key) {
       discoveredKey = { base, key: json.publishable_key }
@@ -28,6 +29,15 @@ async function publishableKey(base: string): Promise<string> {
     return cached
   }
   return ""
+}
+
+/** Web previews can switch store with ?store= (then the key is always discovered). */
+function isWebOverride() {
+  try {
+    return typeof window !== "undefined" && !!window.localStorage?.getItem("spir_store")
+  } catch {
+    return false
+  }
 }
 
 /** Origins the backend may use in file URLs when it is not configured with its public address. */
@@ -221,6 +231,28 @@ export const listBrands = async () =>
   (await storeFetch<{ collections: Brand[] }>("/collections?fields=id,title,handle,metadata&limit=50")).collections
 
 /* ------------------------- settings, deals, reviews ------------------------ */
+
+/* ---------------------------------- store ---------------------------------- */
+
+export type Features = {
+  wishlist: boolean
+  reviews: boolean
+  stories: boolean
+  coupons: boolean
+  brands: boolean
+  notifications: boolean
+  flash_sale: boolean
+}
+export type TenantInfo = {
+  id: string
+  slug: string
+  name: string
+  branding: { app_name: string; logo_url?: string; theme: "elegant" | "natural" }
+  features: Features
+  settings: AppSettings
+}
+/** Name, logo, theme, features and settings of this app's store. */
+export const getTenant = async () => (await storeFetch<{ tenant: TenantInfo }>("/app-tenant")).tenant
 
 export type AppSettings = {
   free_shipping_threshold: number

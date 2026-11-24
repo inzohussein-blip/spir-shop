@@ -24,7 +24,7 @@ import { SavedAddress, useStore } from "../lib/store"
 export default function Checkout() {
   const router = useRouter()
   const { cart, listShippingOptions, placeOrder, applyPromo, removePromo, loading } = useCart()
-  const { address, saveAddress, addOrder } = useStore()
+  const { address, saveAddress, addOrder, features } = useStore()
   const [step, setStep] = useState<1 | 2>(1)
   const [form, setForm] = useState<SavedAddress>(address ?? EMPTY_ADDRESS)
   const [options, setOptions] = useState<ShippingOption[]>([])
@@ -157,6 +157,8 @@ export default function Checkout() {
               })}
             </View>
 
+            {features.coupons ? (
+            <>
             <Text style={[styles.h2, { color: "#1d2a5a" }]}>كود الخصم</Text>
             <View style={styles.coupon}>
               <TextInput
@@ -184,6 +186,8 @@ export default function Checkout() {
                 </Pressable>
               </View>
             ))}
+            </>
+            ) : null}
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <Button label="متابعة للدفع" onPress={toPayment} style={{ marginTop: 10 }} testID="to-payment" />

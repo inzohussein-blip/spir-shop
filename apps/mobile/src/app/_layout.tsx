@@ -8,7 +8,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context"
 import UpdatePrompts from "../components/UpdatePrompts"
 import { CartProvider, useCart } from "../lib/cart"
 import { StoreProvider } from "../lib/store"
-import { COLORS, loadBackendUrl } from "../lib/config"
+import { COLORS } from "../lib/config"
 import { DrawerProvider } from "../lib/drawer"
 import { openLink } from "../lib/links"
 import { syncPushToken } from "../lib/push"
@@ -41,12 +41,8 @@ function PushBridge() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold })
-  const [serverReady, setServerReady] = useState(false)
-  useEffect(() => {
-    loadBackendUrl().finally(() => setServerReady(true))
-  }, [])
   // Render with system fonts if the font files fail to load, rather than blocking the app
-  if ((!fontsLoaded && !fontError) || !serverReady) return null
+  if (!fontsLoaded && !fontError) return null
 
   return (
     <SafeAreaProvider>

@@ -4,8 +4,13 @@
 #   1. Bump "version" in apps/mobile/app.json and push to the default branch
 #      (the commit message becomes the release notes; add [required] to force the update)
 #   2. Push a tag:      git tag v1.1.0 && git push origin v1.1.0
-#   3. Run manually:    Actions > Android APK > Run workflow (version, notes, required)
+#   3. Run manually:    Actions > Android APK > Run workflow (store, version, notes, required)
 # A version that already has a release is skipped.
+#
+# Several stores (one server): "store" picks apps/mobile/stores/<store>.json
+# (app name, package id, icon). The default store "spir" is released as
+# "vX.Y.Z"; any other store as "<store>-vX.Y.Z", and each store's app only
+# updates to its own releases.
 #
 # Installed apps pick the new release up automatically: the backend's
 # /store/mobile-version reads the latest release (MOBILE_GITHUB_REPO), the app
@@ -22,8 +27,8 @@
 #   ANDROID_KEY_PASSWORD
 # Switching keys later means users reinstall the app once.
 # Optional repository variable:
-#   EXPO_PUBLIC_MEDUSA_BACKEND_URL   public server address baked into the APK
-#                                    (users can still change it in the app settings)
+#   EXPO_PUBLIC_MEDUSA_BACKEND_URL   server address baked into the APK
+#                                    (default: the shared server on Railway)
 
 name: Android APK
 
@@ -34,6 +39,10 @@ on:
     tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
+      store:
+        description: "Store (slug in apps/mobile/stores, e.g. spir or glow)"
+        required: true
+        default: spir
       version:
         description: "Version (e.g. 1.1.0)"
         required: true
@@ -50,7 +59,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: android-apk
+  group: android-apk-${{ inputs.store || 'spir' }}
   cancel-in-progress: false
 
 jobs:
@@ -61,6 +70,9 @@ jobs:
       version: ${{ steps.decide.outputs.version }}
       code: ${{ steps.decide.outputs.code }}
       notes: ${{ steps.decide.outputs.notes }}
+      store: ${{ steps.decide.outputs.store }}
+      tag: ${{ steps.decide.outputs.tag }}
+      app_name: ${{ steps.decide.outputs.app_name }}
     steps:
       - uses: actions/checkout@v5
 
@@ -72,6 +84,7 @@ jobs:
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.ref_name }}
           INPUT_VERSION: ${{ inputs.version }}
+          INPUT_STORE: ${{ inputs.store }}
           INPUT_NOTES: ${{ inputs.notes }}
           INPUT_REQUIRED: ${{ inputs.required_update }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
@@ -92,22 +105,33 @@ jobs:
           # Monotonic Android versionCode derived from the version: 1.2.3 -> 10203
           CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
 
+          STORE="${INPUT_STORE:-spir}"
+          if [ ! -f "apps/mobile/stores/$STORE.json" ]; then
+            echo "::error::Unknown store '$STORE': add apps/mobile/stores/$STORE.json"; exit 1
+          fi
+          APP_NAME=$(node -p "require('./apps/mobile/stores/$STORE.json').app_name")
+          TAG="v$VERSION"
+          [ "$STORE" != "spir" ] && TAG="$STORE-v$VERSION"
+
           BUILD=true
-          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            echo "::notice::Release v$VERSION already exists, skipping"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::notice::Release $TAG already exists, skipping"
             BUILD=false
           fi
-          [ -z "$NOTES" ] && NOTES="نسخة جديدة من تطبيق Spir Shop"
+          [ -z "$NOTES" ] && NOTES="نسخة جديدة من تطبيق $APP_NAME"
 
           {
             echo "build=$BUILD"
             echo "version=$VERSION"
             echo "code=$CODE"
+            echo "store=$STORE"
+            echo "tag=$TAG"
+            echo "app_name=$APP_NAME"
             echo "notes<<NOTES_EOF"
             echo "$NOTES"
             echo "NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
-          echo "Version $VERSION (versionCode $CODE), build=$BUILD"
+          echo "$APP_NAME ($STORE) $VERSION (versionCode $CODE), tag $TAG, build=$BUILD"
 
   build:
     needs: prepare
@@ -117,6 +141,8 @@ jobs:
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
       VERSION_CODE: ${{ needs.prepare.outputs.code }}
+      APP_STORE: ${{ needs.prepare.outputs.store }}
+      APK_NAME: ${{ needs.prepare.outputs.store == 'spir' && 'spir-shop' || needs.prepare.outputs.store }}
       ANDROID_NDK_VERSION: "27.1.12297006"
     steps:
       - uses: actions/checkout@v5
@@ -192,8 +218,9 @@ jobs:
         env:
           BACKEND_URL: ${{ vars.EXPO_PUBLIC_MEDUSA_BACKEND_URL }}
         run: |
-          # The publishable key is discovered from the server at runtime (GET /mobile/config)
-          echo "EXPO_PUBLIC_MEDUSA_BACKEND_URL=${BACKEND_URL:-http://localhost:9000}" > .env
+          # The store's publishable key is discovered from the server at runtime (GET /mobile/config?store=)
+          echo "EXPO_PUBLIC_MEDUSA_BACKEND_URL=${BACKEND_URL:-https://backend-production-eb711937.up.railway.app}" > .env
+          echo "EXPO_PUBLIC_STORE=$APP_STORE" >> .env
 
       - name: Build signed APK
         working-directory: apps/mobile
@@ -206,7 +233,7 @@ jobs:
         working-directory: apps/mobile
         run: |
           # Fails if the APK is not validly signed; prints the signer for the log
-          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/spir-shop-$VERSION.apk" | grep -E "certificate (DN|SHA-256 digest)"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$APK_NAME-$VERSION.apk" | grep -E "certificate (DN|SHA-256 digest)"
 
       - name: Remove signing material
         if: always()
@@ -215,16 +242,16 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: spir-shop-${{ env.VERSION }}
+          name: ${{ env.APK_NAME }}-${{ env.VERSION }}
           path: apps/mobile/dist/*.apk
           retention-days: 30
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.VERSION }}
+          tag_name: ${{ needs.prepare.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: Spir Shop ${{ env.VERSION }}
+          name: ${{ needs.prepare.outputs.app_name }} ${{ env.VERSION }}
           body: ${{ needs.prepare.outputs.notes }}
-          files: apps/mobile/dist/spir-shop-${{ env.VERSION }}.apk
-          make_latest: "true"
+          files: apps/mobile/dist/${{ env.APK_NAME }}-${{ env.VERSION }}.apk
+          make_latest: ${{ needs.prepare.outputs.store == 'spir' && 'true' || 'false' }}
