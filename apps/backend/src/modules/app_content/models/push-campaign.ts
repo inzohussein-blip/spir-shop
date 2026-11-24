@@ -3,6 +3,8 @@ import { model } from "@medusajs/framework/utils"
 /** A push notification sent from the admin (or automatically, e.g. abandoned cart). */
 const PushCampaign = model.define("app_push_campaign", {
   id: model.id({ prefix: "pcamp" }).primaryKey(),
+  /** store (app_tenant) this belongs to */
+  tenant_id: model.text().index().nullable(),
   kind: model.enum(["campaign", "abandoned_cart"]).default("campaign"),
   title: model.text(),
   body: model.text(),

@@ -17,8 +17,8 @@ type Layout = {
 const service = (container: { resolve: (k: string) => unknown }) =>
   container.resolve(APP_CONTENT_MODULE) as AppContentModuleService
 
-async function findLayout(svc: AppContentModuleService, page: string) {
-  const [layout] = await svc.listAppLayouts({ page })
+async function findLayout(svc: AppContentModuleService, page: string, tenantId: string) {
+  const [layout] = await svc.listAppLayouts({ page, tenant_id: tenantId })
   return layout as unknown as Layout | undefined
 }
 
@@ -28,15 +28,15 @@ type DraftCompensation = { id: string; draft: Record<string, unknown> | null }
 
 export const saveLayoutDraftStep = createStep(
   "save-layout-draft",
-  async (input: { page: string; blocks: AppBlock[] }, { container }) => {
+  async (input: { tenant_id: string; page: string; blocks: AppBlock[] }, { container }) => {
     const svc = service(container)
-    const existing = await findLayout(svc, input.page)
+    const existing = await findLayout(svc, input.page, input.tenant_id)
     if (existing) {
       const updated = await svc.updateAppLayouts({ id: existing.id, draft: { blocks: input.blocks } })
       const comp: DraftCompensation = { id: existing.id, draft: existing.draft }
       return new StepResponse(updated, comp)
     }
-    const created = await svc.createAppLayouts({ page: input.page, draft: { blocks: input.blocks } })
+    const created = await svc.createAppLayouts({ tenant_id: input.tenant_id, page: input.page, draft: { blocks: input.blocks } })
     const comp: DraftCompensation = { id: created.id, draft: null }
     return new StepResponse(created, comp)
   },
@@ -54,11 +54,12 @@ export const saveLayoutDraftStep = createStep(
 /** Publishes `blocks` (or the current draft) as a new version and records a snapshot. */
 export const publishLayoutStep = createStep(
   "publish-layout",
-  async (input: { page: string; blocks?: AppBlock[] }, { container }) => {
+  async (input: { tenant_id: string; page: string; blocks?: AppBlock[] }, { container }) => {
     const svc = service(container)
-    let layout = await findLayout(svc, input.page)
+    let layout = await findLayout(svc, input.page, input.tenant_id)
     if (!layout) {
       layout = (await svc.createAppLayouts({
+        tenant_id: input.tenant_id,
         page: input.page,
         draft: { blocks: input.blocks ?? defaultBlocksFor(input.page) },
       })) as unknown as Layout
@@ -75,6 +76,7 @@ export const publishLayoutStep = createStep(
       published_at: new Date(),
     })
     const snapshot = await svc.createAppLayoutVersions({
+      tenant_id: input.tenant_id,
       page: input.page,
       version,
       // stored as a JSON array
@@ -92,9 +94,9 @@ export const publishLayoutStep = createStep(
 
 export const getLayoutVersionStep = createStep(
   "get-layout-version",
-  async (input: { page: string; version: number }, { container }) => {
+  async (input: { tenant_id: string; page: string; version: number }, { container }) => {
     const svc = service(container)
-    const [snapshot] = await svc.listAppLayoutVersions({ page: input.page, version: input.version })
+    const [snapshot] = await svc.listAppLayoutVersions({ tenant_id: input.tenant_id, page: input.page, version: input.version })
     if (!snapshot) {
       throw new MedusaError(
         MedusaError.Types.NOT_FOUND,
@@ -108,6 +110,7 @@ export const getLayoutVersionStep = createStep(
 /* ------------------------------- stories ------------------------------- */
 
 export type StoryInput = {
+  tenant_id?: string
   title?: string
   media_url?: string
   media_type?: "image" | "video"
@@ -158,6 +161,7 @@ export const deleteStoryStep = createStep(
 /* -------------------------------- push --------------------------------- */
 
 export type PushTokenInput = {
+  tenant_id?: string
   token: string
   platform: string
   cart_id?: string | null
@@ -209,6 +213,7 @@ export const sendPushStep = createStep(
   "send-push",
   async (
     input: {
+      tenant_id: string
       kind: "campaign" | "abandoned_cart"
       title: string
       body: string
@@ -218,7 +223,7 @@ export const sendPushStep = createStep(
     { container }
   ) => {
     const svc = service(container)
-    const filters: Record<string, unknown> = { enabled: true }
+    const filters: Record<string, unknown> = { enabled: true, tenant_id: input.tenant_id }
     if (input.audience?.province) filters.province = input.audience.province
     if (input.audience?.token_ids?.length) filters.id = input.audience.token_ids
 
@@ -240,6 +245,7 @@ export const sendPushStep = createStep(
     }
 
     const campaign = await svc.createPushCampaigns({
+      tenant_id: input.tenant_id,
       kind: input.kind,
       title: input.title,
       body: input.body,

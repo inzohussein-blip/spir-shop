@@ -4,11 +4,13 @@ import type AppContentModuleService from "../../../../modules/app_content/servic
 import { defaultBlocksFor } from "../../../../lib/app-blocks"
 import { saveAppLayoutDraftWorkflow } from "../../../../workflows/app-content"
 import type { SaveLayoutBody } from "../../../app-content-validators"
+import { tenantFromAdminRequest } from "../../../../lib/tenant"
 
 /** GET /admin/app-layouts/:page - draft + published state for the builder. */
 export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
   const svc = req.scope.resolve<AppContentModuleService>(APP_CONTENT_MODULE)
-  const [layout] = await svc.listAppLayouts({ page: req.params.page })
+  const tenant = await tenantFromAdminRequest(req)
+  const [layout] = await svc.listAppLayouts({ page: req.params.page, tenant_id: tenant.id })
   res.json({
     layout: layout ?? {
       page: req.params.page,
@@ -23,7 +25,7 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
 /** POST /admin/app-layouts/:page - save the draft (not visible in the app until published). */
 export const POST = async (req: AuthenticatedMedusaRequest<SaveLayoutBody>, res: MedusaResponse) => {
   const { result } = await saveAppLayoutDraftWorkflow(req.scope).run({
-    input: { page: req.params.page, blocks: req.validatedBody.blocks },
+    input: { tenant_id: (await tenantFromAdminRequest(req)).id, page: req.params.page, blocks: req.validatedBody.blocks },
   })
   res.json({ layout: result })
 }

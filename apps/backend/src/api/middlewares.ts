@@ -4,6 +4,8 @@ import {
   PublishLayoutSchema,
   CreateReviewSchema,
   AppUploadSchema,
+  CreateTenantSchema,
+  UpdateTenantSchema,
   AppFeedbackSchema,
   RegisterPushTokenSchema,
   RollbackLayoutSchema,
@@ -77,6 +79,16 @@ export default defineMiddlewares({
       methods: ["POST"],
       matcher: "/store/app-reviews",
       middlewares: [validateAndTransformBody(CreateReviewSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/admin/app-tenants",
+      middlewares: [validateAndTransformBody(CreateTenantSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/admin/app-tenants/:id",
+      middlewares: [validateAndTransformBody(UpdateTenantSchema)],
     },
     {
       methods: ["POST"],

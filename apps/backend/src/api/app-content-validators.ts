@@ -89,6 +89,48 @@ export const AppFeedbackSchema = z.object({
 
 export const UpdateReviewSchema = z.object({ status: z.enum(["approved", "hidden"]) })
 
+/* ------------------------------ stores ------------------------------ */
+
+const BrandingSchema = z.object({
+  app_name: z.string().max(60).optional(),
+  logo_url: z.string().max(500).optional(),
+  theme: z.enum(["elegant", "natural"]).optional(),
+  accent_color: z.string().max(20).optional(),
+})
+
+const FeaturesSchema = z.object({
+  wishlist: z.boolean().optional(),
+  reviews: z.boolean().optional(),
+  stories: z.boolean().optional(),
+  coupons: z.boolean().optional(),
+  brands: z.boolean().optional(),
+  notifications: z.boolean().optional(),
+  flash_sale: z.boolean().optional(),
+})
+
+export const CreateTenantSchema = z.object({
+  name: z.string().min(2).max(80),
+  slug: z
+    .string()
+    .min(2)
+    .max(30)
+    .regex(/^[a-z0-9-]+$/, "حروف إنكليزية صغيرة وأرقام وشرطة فقط"),
+  owner_email: z.string().email().optional(),
+  branding: BrandingSchema.optional(),
+  features: FeaturesSchema.optional(),
+})
+
+export const UpdateTenantSchema = z.object({
+  name: z.string().min(2).max(80).optional(),
+  status: z.enum(["active", "suspended"]).optional(),
+  owner_email: z.string().email().nullable().optional(),
+  branding: BrandingSchema.optional(),
+  features: FeaturesSchema.optional(),
+})
+
+export type CreateTenantBody = z.infer<typeof CreateTenantSchema>
+export type UpdateTenantBody = z.infer<typeof UpdateTenantSchema>
+
 export type SaveLayoutBody = z.infer<typeof SaveLayoutSchema>
 export type PublishLayoutBody = z.infer<typeof PublishLayoutSchema>
 export type RollbackLayoutBody = z.infer<typeof RollbackLayoutSchema>

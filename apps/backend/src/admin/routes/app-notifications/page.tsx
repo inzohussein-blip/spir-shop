@@ -3,6 +3,7 @@ import { BellAlert } from "@medusajs/icons"
 import { Badge, Button, Container, Heading, Input, Label, Table, Text, Textarea, toast } from "@medusajs/ui"
 import { useEffect, useState } from "react"
 import { adminFetch, IRAQ_GOVERNORATES } from "../../lib/api"
+import { TenantBar } from "../../components/tenant-bar"
 
 type Campaign = {
   id: string
@@ -64,6 +65,7 @@ const AppNotificationsPage = () => {
 
   return (
     <div className="flex flex-col gap-4" dir="rtl">
+      <TenantBar />
       <Container className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <Heading level="h1">إشعار جديد</Heading>

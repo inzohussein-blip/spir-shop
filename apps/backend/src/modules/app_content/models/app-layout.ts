@@ -6,11 +6,13 @@ import { model } from "@medusajs/framework/utils"
  */
 const AppLayout = model.define("app_layout", {
   id: model.id({ prefix: "alay" }).primaryKey(),
-  page: model.text().unique(),
+  /** store (app_tenant) this layout belongs to */
+  tenant_id: model.text().nullable(),
+  page: model.text(),
   draft: model.json(),
   published: model.json().nullable(),
   version: model.number().default(0),
   published_at: model.dateTime().nullable(),
-})
+}).indexes([{ on: ["tenant_id", "page"], unique: true }])
 
 export default AppLayout

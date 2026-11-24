@@ -43,10 +43,19 @@ export default async function abandonedCartPush(container: MedusaContainer) {
   if (!due.length) return
 
   const dueIds = new Set(due.map((c) => c.id))
-  const tokenIds = tokens.filter((t) => t.cart_id && dueIds.has(t.cart_id)).map((t) => t.id)
+  // one reminder campaign per store
+  const byTenant = new Map<string, string[]>()
+  for (const t of tokens) {
+    if (!t.cart_id || !dueIds.has(t.cart_id)) continue
+    const key = t.tenant_id ?? ""
+    byTenant.set(key, [...(byTenant.get(key) ?? []), t.id])
+  }
 
+  let sent = 0
+  for (const [tenantId, tokenIds] of byTenant) {
   const { result } = await sendPushCampaignWorkflow(container).run({
     input: {
+      tenant_id: tenantId,
       kind: "abandoned_cart",
       title: process.env.ABANDONED_CART_TITLE || "نسيتي شي بالسلة",
       body:
@@ -56,6 +65,8 @@ export default async function abandonedCartPush(container: MedusaContainer) {
       audience: { token_ids: tokenIds },
     },
   })
+  sent += result.sent_count
+  }
 
   for (const cart of due) {
     await updateCartWorkflow(container).run({
@@ -69,7 +80,7 @@ export default async function abandonedCartPush(container: MedusaContainer) {
     })
   }
 
-  logger.info(`Abandoned-cart push: ${due.length} carts, ${result.sent_count} sent`)
+  logger.info(`Abandoned-cart push: ${due.length} carts, ${sent} sent`)
 }
 
 export const config = {

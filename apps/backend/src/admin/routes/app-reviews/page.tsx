@@ -3,6 +3,7 @@ import { StarSolid } from "@medusajs/icons"
 import { Badge, Button, Container, Heading, Table, Text, toast } from "@medusajs/ui"
 import { useEffect, useState } from "react"
 import { adminFetch } from "../../lib/api"
+import { TenantBar } from "../../components/tenant-bar"
 
 type Review = {
   id: string
@@ -41,6 +42,8 @@ const AppReviewsPage = () => {
   const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : "-"
 
   return (
+    <div className="flex flex-col gap-4" dir="rtl">
+      <TenantBar />
     <Container className="flex flex-col gap-4" dir="rtl">
       <div className="flex items-center justify-between">
         <Heading level="h1">تقييمات المنتجات</Heading>
@@ -99,6 +102,7 @@ const AppReviewsPage = () => {
       </Table>
       {!reviews.length ? <Text className="text-ui-fg-subtle">لا توجد تقييمات بعد</Text> : null}
     </Container>
+    </div>
   )
 }
 

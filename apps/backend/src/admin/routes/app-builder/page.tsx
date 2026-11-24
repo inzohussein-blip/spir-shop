@@ -6,6 +6,7 @@ import "@puckeditor/core/puck.css"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { adminFetch, Block, Option } from "../../lib/api"
 import { buildConfig, fromPuckData, toPuckData } from "../../lib/builder-config"
+import { TenantBar } from "../../components/tenant-bar"
 
 type Layout = {
   page: string
@@ -162,6 +163,7 @@ const AppBuilderPage = () => {
 
   return (
     <div className="flex flex-col gap-2">
+      <TenantBar />
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <Text size="small" className="text-ui-fg-subtle">
           {layout?.version

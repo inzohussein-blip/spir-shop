@@ -10,6 +10,7 @@ import { APP_CONTENT_MODULE } from "../../modules/app_content"
 import type AppContentModuleService from "../../modules/app_content/service"
 import { AppSettings } from "../../lib/app-settings"
 import { STATUS_PUSH } from "../../lib/order-status"
+import { clearTenantCache } from "../../lib/tenant"
 import { sendPushCampaignWorkflow } from "./index"
 
 const service = (container: { resolve: (k: string) => unknown }) =>
@@ -83,6 +84,7 @@ export const saveAppSettingsWorkflow = createWorkflow(
 /* -------------------------------- reviews --------------------------------- */
 
 export type CreateReviewInput = {
+  tenant_id?: string
   product_id: string
   order_id: string
   rating: number
@@ -181,6 +183,8 @@ const notifyOrderDevicesStep = createStep(
     const text = STATUS_PUSH[input.status]
     const { result } = await sendPushCampaignWorkflow(container).run({
       input: {
+        // the devices that placed the order all belong to the order's store
+        tenant_id: tokens[0].tenant_id ?? "",
         kind: "campaign",
         title: text.title,
         body: text.body.replace("{n}", String(input.display_id)),
@@ -223,3 +227,36 @@ export const confirmOrderByPhoneWorkflow = createWorkflow(
     return new WorkflowResponse(update)
   }
 )
+
+/* --------------------------------- stores --------------------------------- */
+
+export type TenantUpdate = {
+  id: string
+  name?: string
+  status?: "active" | "suspended"
+  branding?: Record<string, unknown> | null
+  features?: Record<string, unknown> | null
+  settings?: Record<string, unknown> | null
+  owner_email?: string | null
+}
+
+const updateTenantStep = createStep(
+  "update-tenant",
+  async (input: TenantUpdate, { container }) => {
+    const svc = service(container)
+    const before = await svc.retrieveTenant(input.id)
+    const updated = await svc.updateTenants(input as never)
+    clearTenantCache()
+    return new StepResponse(updated, before)
+  },
+  async (before, { container }) => {
+    if (!before) return
+    await service(container).updateTenants(before as never)
+    clearTenantCache()
+  }
+)
+
+/** Change a store's name, status, branding, features or settings. */
+export const updateTenantWorkflow = createWorkflow("update-tenant", (input: TenantUpdate) => {
+  return new WorkflowResponse(updateTenantStep(input))
+})

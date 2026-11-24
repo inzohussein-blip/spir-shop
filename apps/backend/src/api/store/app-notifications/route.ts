@@ -1,6 +1,7 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { APP_CONTENT_MODULE } from "../../../modules/app_content"
 import type AppContentModuleService from "../../../modules/app_content/service"
+import { tenantFromStoreRequest } from "../../../lib/tenant"
 
 /**
  * GET /store/app-notifications?province= - recent marketing notifications for
@@ -10,7 +11,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const province = String(req.query.province ?? "")
   const svc = req.scope.resolve<AppContentModuleService>(APP_CONTENT_MODULE)
   const campaigns = await svc.listPushCampaigns(
-    { kind: "campaign", status: "sent" },
+    { kind: "campaign", status: "sent", tenant_id: (await tenantFromStoreRequest(req)).id },
     { order: { sent_at: "DESC" }, take: 50 }
   )
   const notifications = campaigns

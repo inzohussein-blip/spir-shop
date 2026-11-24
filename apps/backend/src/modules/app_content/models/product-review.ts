@@ -7,6 +7,7 @@ import { model } from "@medusajs/framework/utils"
 const ProductReview = model
   .define("app_product_review", {
     id: model.id({ prefix: "prev" }).primaryKey(),
+    tenant_id: model.text().index().nullable(),
     product_id: model.text().index(),
     order_id: model.text(),
     rating: model.number(),

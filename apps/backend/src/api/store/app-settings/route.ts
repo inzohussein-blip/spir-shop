@@ -1,11 +1,9 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
-import { readAppSettings } from "../../../lib/app-settings"
+import { tenantSettings, tenantFromStoreRequest } from "../../../lib/tenant"
 
-/** GET /store/app-settings - free delivery threshold, contacts, delivery estimates, trust badges. */
+/** GET /store/app-settings - the store's free delivery threshold, contacts, delivery estimates, trust badges. */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  const { data } = await query.graph({ entity: "store", fields: ["metadata"], pagination: { take: 1 } })
-  res.setHeader("Cache-Control", "public, max-age=120")
-  res.json({ settings: readAppSettings(data[0]?.metadata) })
+  const tenant = await tenantFromStoreRequest(req)
+  res.setHeader("Cache-Control", "public, max-age=60")
+  res.json({ settings: tenantSettings(tenant) })
 }

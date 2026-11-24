@@ -7,6 +7,7 @@ import {
 } from "@medusajs/medusa/core-flows"
 import type { AppBlock } from "../lib/app-blocks"
 import { APP_CONTENT_MODULE } from "../modules/app_content"
+import { defaultTenant } from "../lib/tenant"
 import { publishAppLayoutWorkflow } from "../workflows/app-content"
 
 /**
@@ -97,9 +98,14 @@ export default async function seedFigmaLayout({ container }: ExecArgs) {
 
   // Keep the merchant's banner slides if a layout was already published
   const svc = container.resolve(APP_CONTENT_MODULE) as {
-    listAppLayouts: (f: object) => Promise<{ published: { blocks: AppBlock[] } | null }[]>
+    listAppLayouts: (f: object) => Promise<{ published: { blocks: AppBlock[] } | null; version?: number }[]>
   }
-  const [current] = await svc.listAppLayouts({ page: "home" })
+  const [current] = await svc.listAppLayouts({ page: "home", tenant_id: (await defaultTenant(container)).id })
+  // Runs on every deploy: never overwrite a design the merchant already published
+  if ((current as unknown as { version?: number } | undefined)?.version && process.env.FORCE_DEMO_LAYOUT !== "true") {
+    logger.info("Home layout already published, keeping it")
+    return
+  }
   const oldCarousel = current?.published?.blocks.find((b) => b.type === "hero_carousel")
   const slides = (oldCarousel?.props.slides as unknown[] | undefined)?.length
     ? oldCarousel!.props.slides
@@ -137,6 +143,7 @@ export default async function seedFigmaLayout({ container }: ExecArgs) {
       },
     },
   ]
-  await publishAppLayoutWorkflow(container).run({ input: { page: "home", blocks } })
+  const tenant = await defaultTenant(container)
+  await publishAppLayoutWorkflow(container).run({ input: { tenant_id: tenant.id, page: "home", blocks } })
   logger.info("Home layout published in the design's order")
 }

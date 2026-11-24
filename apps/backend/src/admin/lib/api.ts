@@ -2,14 +2,28 @@
  * Small fetch helper for admin extensions. The dashboard is served by the same
  * backend, so the session cookie authenticates these calls.
  */
+/** Store (tenant) chosen with the store switcher; sent with every app-content request. */
+export const TENANT_KEY = "spir_admin_tenant"
+export const currentTenantId = () => {
+  try {
+    return window.localStorage.getItem(TENANT_KEY) || ""
+  } catch {
+    return ""
+  }
+}
+
 export async function adminFetch<T>(
   path: string,
   init: { method?: string; body?: unknown } = {}
 ): Promise<T> {
+  const headers: Record<string, string> = {}
+  if (init.body) headers["content-type"] = "application/json"
+  const tenant = currentTenantId()
+  if (tenant) headers["x-tenant-id"] = tenant
   const res = await fetch(path, {
     method: init.method ?? "GET",
     credentials: "include",
-    headers: init.body ? { "content-type": "application/json" } : undefined,
+    headers,
     body: init.body ? JSON.stringify(init.body) : undefined,
   })
   const json = await res.json().catch(() => ({}))

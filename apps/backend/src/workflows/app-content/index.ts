@@ -16,7 +16,7 @@ import {
 
 export const saveAppLayoutDraftWorkflow = createWorkflow(
   "save-app-layout-draft",
-  (input: { page: string; blocks: AppBlock[] }) => {
+  (input: { tenant_id: string; page: string; blocks: AppBlock[] }) => {
     const layout = saveLayoutDraftStep(input)
     return new WorkflowResponse(layout)
   }
@@ -25,7 +25,7 @@ export const saveAppLayoutDraftWorkflow = createWorkflow(
 /** Publish the current draft, or the given blocks, as a new live version. */
 export const publishAppLayoutWorkflow = createWorkflow(
   "publish-app-layout",
-  (input: { page: string; blocks?: AppBlock[] }) => {
+  (input: { tenant_id: string; page: string; blocks?: AppBlock[] }) => {
     const layout = publishLayoutStep(input)
     return new WorkflowResponse(layout)
   }
@@ -34,9 +34,9 @@ export const publishAppLayoutWorkflow = createWorkflow(
 /** Re-publish an older version (creates a new version with the old blocks). */
 export const rollbackAppLayoutWorkflow = createWorkflow(
   "rollback-app-layout",
-  (input: { page: string; version: number }) => {
+  (input: { tenant_id: string; page: string; version: number }) => {
     const blocks = getLayoutVersionStep(input)
-    const layout = publishLayoutStep({ page: input.page, blocks })
+    const layout = publishLayoutStep({ tenant_id: input.tenant_id, page: input.page, blocks })
     return new WorkflowResponse(layout)
   }
 )
@@ -66,6 +66,7 @@ export const registerPushTokenWorkflow = createWorkflow(
 export const sendPushCampaignWorkflow = createWorkflow(
   "send-push-campaign",
   (input: {
+    tenant_id: string
     kind: "campaign" | "abandoned_cart"
     title: string
     body: string

@@ -24,4 +24,4 @@ WORKDIR /app/apps/backend/.medusa/server
 RUN mkdir -p static
 EXPOSE 9000
 # migrations + idempotent demo data, then the server
-CMD ["sh", "-c", "npx medusa db:migrate && npx medusa exec ./src/scripts/seed-admin.js && if [ \"$SEED_DEMO\" = \"true\" ]; then npx medusa exec ./src/scripts/seed-demo-brands.js; npx medusa exec ./src/scripts/seed-demo-sale.js; npx medusa exec ./src/scripts/seed-figma-layout.js; fi; npx medusa start"]
+CMD ["sh", "-c", "npx medusa db:migrate && npx medusa exec ./src/scripts/seed-admin.js && if [ \"$SEED_DEMO\" = \"true\" ]; then npx medusa exec ./src/scripts/seed-demo-brands.js; npx medusa exec ./src/scripts/seed-demo-sale.js; npx medusa exec ./src/scripts/seed-figma-layout.js; npx medusa exec ./src/scripts/seed-demo-tenant.js; fi; npx medusa start"]

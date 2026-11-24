@@ -5,6 +5,7 @@ import PushCampaign from "./models/push-campaign"
 import ProductReview from "./models/product-review"
 import PushToken from "./models/push-token"
 import Story from "./models/story"
+import Tenant from "./models/tenant"
 
 class AppContentModuleService extends MedusaService({
   AppLayout,
@@ -13,6 +14,7 @@ class AppContentModuleService extends MedusaService({
   PushToken,
   PushCampaign,
   ProductReview,
+  Tenant,
 }) {}
 
 export default AppContentModuleService

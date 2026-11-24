@@ -1,13 +1,14 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { APP_CONTENT_MODULE } from "../../../modules/app_content"
 import type AppContentModuleService from "../../../modules/app_content/service"
+import { tenantFromStoreRequest } from "../../../lib/tenant"
 
 /** GET /store/app-stories - active stories within their start/expiry window. */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const svc = req.scope.resolve<AppContentModuleService>(APP_CONTENT_MODULE)
   const now = Date.now()
   const stories = (
-    await svc.listStories({ is_active: true }, { order: { rank: "ASC", created_at: "DESC" }, take: 50 })
+    await svc.listStories({ is_active: true, tenant_id: (await tenantFromStoreRequest(req)).id }, { order: { rank: "ASC", created_at: "DESC" }, take: 50 })
   )
     .filter((s) => !s.starts_at || new Date(s.starts_at).getTime() <= now)
     .filter((s) => !s.expires_at || new Date(s.expires_at).getTime() > now)

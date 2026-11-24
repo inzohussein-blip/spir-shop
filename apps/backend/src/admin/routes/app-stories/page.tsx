@@ -3,6 +3,7 @@ import { PlaySolid } from "@medusajs/icons"
 import { Badge, Button, Container, Heading, Input, Label, Switch, Text, toast } from "@medusajs/ui"
 import { useEffect, useState } from "react"
 import { adminFetch, uploadFile } from "../../lib/api"
+import { TenantBar } from "../../components/tenant-bar"
 
 type Story = {
   id: string
@@ -83,6 +84,7 @@ const AppStoriesPage = () => {
 
   return (
     <div className="flex flex-col gap-4" dir="rtl">
+      <TenantBar />
       <Container className="flex flex-col gap-4">
         <Heading level="h1">قصة جديدة</Heading>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

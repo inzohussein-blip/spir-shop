@@ -2,6 +2,7 @@ import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { APP_CONTENT_MODULE } from "../../../../modules/app_content"
 import type AppContentModuleService from "../../../../modules/app_content/service"
 import { defaultBlocksFor } from "../../../../lib/app-blocks"
+import { tenantFromStoreRequest } from "../../../../lib/tenant"
 
 /**
  * GET /store/app-layouts/:page - the published layout the app renders.
@@ -9,7 +10,8 @@ import { defaultBlocksFor } from "../../../../lib/app-blocks"
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const svc = req.scope.resolve<AppContentModuleService>(APP_CONTENT_MODULE)
-  const [layout] = await svc.listAppLayouts({ page: req.params.page })
+  const tenant = await tenantFromStoreRequest(req)
+  const [layout] = await svc.listAppLayouts({ page: req.params.page, tenant_id: tenant.id })
   const published = layout?.published as { blocks?: unknown[] } | null | undefined
 
   res.setHeader("Cache-Control", "public, max-age=30")
