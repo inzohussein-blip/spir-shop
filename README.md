@@ -108,7 +108,8 @@ npm run dev                      # http://localhost:8000
 | الجزء | المنصة | ملاحظات |
 |---|---|---|
 | الخلفية + لوحة التحكم | **Railway** (خدمة `backend` من `Dockerfile.backend`) | مع Postgres و Redis على نفس المشروع، و volume على `.medusa/server/static` للملفات المرفوعة |
-| متجر الويب | **Vercel** (المجلد `apps/storefront`) | الإعدادات في `apps/storefront/vercel.json` |
+| تطبيق الويب (PWA) | **Railway** (`Dockerfile.web`) أو **Vercel** (`apps/mobile`) | نفس كود تطبيق الموبايل، انظر القسم الجاي |
+| متجر Next.js (اختياري) | **Vercel** (المجلد `apps/storefront`) | الإعدادات في `apps/storefront/vercel.json` |
 | تطبيق الموبايل | GitHub Actions ← Releases | انظر `.github/workflows/android-apk.yml` |
 
 ### الخلفية على Railway
@@ -117,6 +118,22 @@ npm run dev                      # http://localhost:8000
 - **فحص الصحة:** `/health`.
 - `STORE_CORS` و `AUTH_CORS` لازم تحتوي دومين متجر Vercel.
 - على أي استضافة Docker ثانية: `start.sh` يشغّل `release.sh` تلقائياً قبل تشغيل السيرفر.
+
+### تطبيق واحد للويب وأندرويد و iOS
+تطبيق Expo بالمجلد `apps/mobile` هو نفس الكود للثلاث منصات:
+
+| المنصة | البناء | النشر |
+|---|---|---|
+| **الويب (PWA)** | `cd apps/mobile && npm run build:web`، والناتج بالمجلد `dist/` | Railway: خدمة جديدة من `Dockerfile.web`. أو Vercel: Root Directory هو `apps/mobile`، والإعدادات جاهزة بـ `vercel.json` |
+| **أندرويد** | GitHub Actions ← Android APK | ينزل كـ GitHub Release، والتطبيق يحدّث نفسه |
+| **iOS** (لاحقاً) | `npm run build:ios` (EAS Build) | يحتاج حساب Apple Developer، وبعدها `eas submit -p ios` |
+
+- نسخة الويب تنضاف للشاشة الرئيسية مثل التطبيق (أيقونة، شاشة كاملة، RTL)، وتفتح حتى بدون إنترنت بآخر نسخة محفوظة.
+- على شاشات الكمبيوتر تظهر بعمود بعرض الهاتف بوسط الصفحة.
+- إشعارات الهاتف وتحديث ملف APK تشتغل بأندرويد و iOS فقط. بالويب كل تحديث ينزل تلقائياً مع كل نشر جديد.
+- **مهم:** أضف دومين نسخة الويب لمتغيرات الخلفية `STORE_CORS` و `AUTH_CORS`، لأن المتصفح يتصل بالخلفية مباشرة.
+- **متغيرات البناء:** `EXPO_PUBLIC_MEDUSA_BACKEND_URL` (رابط الخلفية)، و `APP_STORE` (أي متجر، والافتراضي `spir`).
+- متجر Next.js بالمجلد `apps/storefront` صار اختيارياً: نفعه بس إذا تحتاج صفحات تفهرسها Google (SEO) أو تطبيق تلكرام المصغّر.
 
 ### متجر الويب على Vercel
 - Root Directory: `apps/storefront`.

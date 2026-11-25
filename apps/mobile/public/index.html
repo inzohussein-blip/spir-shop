@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Spir Shop</title>
+    <meta name="description" content="متجر كوزمتك ومنتجات عناية، توصيل لكل المحافظات والدفع عند الاستلام" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Spir Shop" />
+    <meta property="og:title" content="Spir Shop" />
+    <meta property="og:description" content="متجر كوزمتك ومنتجات عناية، توصيل لكل المحافظات والدفع عند الاستلام" />
+    <meta property="og:image" content="/icons/icon-512.png" />
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        overflow: hidden;
+        margin: 0;
+        background: #ece9e7;
+      }
+      /* The app is designed for a phone: on wider screens it sits in a centered phone-width column */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+        max-width: 520px;
+        margin: 0 auto;
+        background: #ffffff;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>يحتاج المتجر تفعيل JavaScript.</noscript>
+    <div id="root"></div>
+    <script>
+      if ("serviceWorker" in navigator && location.hostname !== "localhost") {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/sw.js").catch(function () {})
+        })
+      }
+    </script>
+  </body>
+</html>
