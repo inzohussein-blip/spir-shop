@@ -1,6 +1,6 @@
 import type { MedusaContainer } from "@medusajs/framework"
 import type { AuthenticatedMedusaRequest, MedusaRequest } from "@medusajs/framework/http"
-import { MedusaError, Modules } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, MedusaError, Modules } from "@medusajs/framework/utils"
 import { APP_CONTENT_MODULE } from "../modules/app_content"
 import type AppContentModuleService from "../modules/app_content/service"
 import { AppSettings, DEFAULT_APP_SETTINGS } from "./app-settings"
@@ -41,6 +41,40 @@ export type TenantRecord = {
   features: Partial<Features> | null
   settings: Partial<AppSettings> | null
   owner_email: string | null
+}
+
+/** First sales channel linked to a publishable key: where that key's carts, orders and products live. */
+export async function keySalesChannelId(container: MedusaContainer, apiKeyId: string): Promise<string | null> {
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const { data } = await query.graph({ entity: "api_key", fields: ["id", "sales_channels.id"], filters: { id: apiKeyId } })
+  const channels = ((data[0] as unknown as { sales_channels?: ({ id: string } | null)[] } | undefined)?.sales_channels ?? []).filter(Boolean)
+  return channels[0]?.id ?? null
+}
+
+export type PublishableKeyChoice = { id: string; token: string; sales_channel_id: string; products: number }
+
+/**
+ * The publishable key the default store's app should use: the active key whose
+ * sales channel holds the most products. Medusa creates its own key on an empty
+ * "Default Sales Channel"; the store's products live behind the seeded key.
+ */
+export async function bestPublishableKey(container: MedusaContainer): Promise<PublishableKeyChoice | null> {
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const { data: keys } = await query.graph({
+    entity: "api_key",
+    fields: ["id", "token", "revoked_at", "created_at", "sales_channels.id"],
+    filters: { type: "publishable" },
+  })
+  const choices: PublishableKeyChoice[] = []
+  for (const k of keys as unknown as { id: string; token: string; revoked_at: unknown; created_at: string; sales_channels?: ({ id: string } | null)[] }[]) {
+    const channel = (k.sales_channels ?? []).find(Boolean)
+    if (k.revoked_at || !channel) continue
+    const { data } = await query.graph({ entity: "sales_channel", fields: ["id", "products_link.product_id"], filters: { id: channel.id } })
+    choices.push({ id: k.id, token: k.token, sales_channel_id: channel.id, products: ((data[0]?.products_link as unknown[]) ?? []).length })
+  }
+  // most products first; on a tie the oldest key (stable)
+  choices.sort((a, b) => b.products - a.products)
+  return choices[0] ?? null
 }
 
 const svc = (c: MedusaContainer) => c.resolve<AppContentModuleService>(APP_CONTENT_MODULE)

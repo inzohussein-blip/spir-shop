@@ -143,3 +143,34 @@ export type CreateReviewBody = z.infer<typeof CreateReviewSchema>
 export type UpdateReviewBody = z.infer<typeof UpdateReviewSchema>
 export type AppUploadBody = z.infer<typeof AppUploadSchema>
 export type AppFeedbackBody = z.infer<typeof AppFeedbackSchema>
+
+/* ------------------------- manager app (admin) ------------------------- */
+
+/** A simple product from the manager app: one price, photos, categories. */
+export const AppProductSchema = z.object({
+  title: z.string().min(1).max(120),
+  description: z.string().max(4000).nullable().optional(),
+  price: z.number().min(0).max(1_000_000_000),
+  status: z.enum(["published", "draft"]).default("published"),
+  images: z.array(z.string().url().max(500)).max(10).default([]),
+  category_ids: z.array(z.string().max(100)).max(10).optional(),
+})
+export const UpdateAppProductSchema = AppProductSchema.partial()
+
+/** Photos from the manager app (products, ads, stories), base64 encoded. */
+export const AdminAppUploadSchema = z.object({
+  files: z
+    .array(
+      z.object({
+        filename: z.string().min(1).max(120),
+        mime_type: z.enum(["image/jpeg", "image/png", "image/webp"]),
+        content: z.string().min(1).max(6_000_000),
+      })
+    )
+    .min(1)
+    .max(6),
+})
+
+export type AppProductBody = z.infer<typeof AppProductSchema>
+export type UpdateAppProductBody = z.infer<typeof UpdateAppProductSchema>
+export type AdminAppUploadBody = z.infer<typeof AdminAppUploadSchema>

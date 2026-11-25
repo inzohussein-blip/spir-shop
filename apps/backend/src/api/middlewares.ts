@@ -14,6 +14,9 @@ import {
   SaveLayoutSchema,
   SendCampaignSchema,
   UpdateStorySchema,
+  AppProductSchema,
+  UpdateAppProductSchema,
+  AdminAppUploadSchema,
 } from "./app-content-validators"
 
 // The product index declares filterable `status` and `sales_channel_ids`, so
@@ -101,6 +104,24 @@ export default defineMiddlewares({
       methods: ["POST"],
       matcher: "/store/app-feedback",
       middlewares: [validateAndTransformBody(AppFeedbackSchema)],
+    },
+    // Manager app: products and photos
+    {
+      methods: ["POST"],
+      matcher: "/admin/app-products",
+      middlewares: [validateAndTransformBody(AppProductSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/admin/app-products/:id",
+      middlewares: [validateAndTransformBody(UpdateAppProductSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/admin/app-uploads",
+      // up to 6 photos of ~4MB each, base64 encoded
+      bodyParser: { sizeLimit: "36mb" },
+      middlewares: [validateAndTransformBody(AdminAppUploadSchema)],
     },
     {
       methods: ["POST"],

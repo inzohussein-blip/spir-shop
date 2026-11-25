@@ -2,6 +2,7 @@ import { MedusaContainer } from "@medusajs/framework"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { APP_CONTENT_MODULE } from "../modules/app_content"
 import type AppContentModuleService from "../modules/app_content/service"
+import { bestPublishableKey } from "../lib/tenant"
 
 /**
  * Multi-store upgrade: turns the existing store into the default store
@@ -18,9 +19,9 @@ export default async function tenantsDefault({ container }: { container: MedusaC
 
   const { data: stores } = await query.graph({ entity: "store", fields: ["id", "name", "metadata", "default_sales_channel_id"] })
   const store = stores[0]
-  const apiKeys = container.resolve(Modules.API_KEY)
-  const [key] = (await apiKeys.listApiKeys({ type: "publishable" })).filter((k) => !k.revoked_at)
-  if (!store?.default_sales_channel_id || !key) {
+  // The key (and its sales channel) that holds the store's products
+  const key = await bestPublishableKey(container)
+  if (!store || !key) {
     logger.warn("Default store not created: no sales channel or publishable key yet")
     return
   }
@@ -29,7 +30,7 @@ export default async function tenantsDefault({ container }: { container: MedusaC
     slug: "spir",
     name: process.env.STORE_BRAND_NAME || store.name || "Spir Shop",
     is_default: true,
-    sales_channel_id: store.default_sales_channel_id,
+    sales_channel_id: key.sales_channel_id,
     api_key_id: key.id,
     api_key_token: key.token,
     branding: { app_name: process.env.STORE_BRAND_NAME || "Spir Shop", theme: (settings?.default_theme as string) ?? "elegant" },
