@@ -96,12 +96,14 @@ export type CreateReviewInput = {
 /** Only customers who ordered the product can review it (once per order). */
 const validateReviewStep = createStep("validate-review", async (input: CreateReviewInput, { container }) => {
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  // the order must belong to the store the review is written in
+  const tenant = input.tenant_id ? await service(container).retrieveTenant(input.tenant_id) : null
   const {
     data: [order],
   } = await query.graph({
     entity: "order",
     fields: ["id", "status", "items.product_id"],
-    filters: { id: input.order_id },
+    filters: { id: input.order_id, ...(tenant ? { sales_channel_id: tenant.sales_channel_id } : {}) },
   })
   if (!order || order.status === "canceled" || !(order.items ?? []).some((i) => i?.product_id === input.product_id)) {
     throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "يمكن تقييم المنتجات التي طلبتها فقط")

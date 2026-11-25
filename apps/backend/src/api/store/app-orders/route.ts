@@ -1,11 +1,13 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { orderTimeline } from "../../../lib/order-status"
+import { tenantFromStoreRequest } from "../../../lib/tenant"
 
 /**
  * GET /store/app-orders?ids=order_1,order_2 - the orders placed from this device
  * (the app keeps their ids), with a customer-facing status timeline.
  * Order ids are long random identifiers, like Medusa's own GET /store/orders/:id.
+ * Only orders placed in the requesting store (its sales channel) are returned.
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const ids = String(req.query.ids ?? "").split(",").filter((x) => /^order_[A-Za-z0-9]+$/.test(x)).slice(0, 50)
@@ -13,6 +15,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     res.json({ orders: [] })
     return
   }
+  const tenant = await tenantFromStoreRequest(req)
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const { data } = await query.graph({
     entity: "order",
@@ -43,7 +46,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       "fulfillments.shipped_at",
       "fulfillments.delivered_at",
     ],
-    filters: { id: ids },
+    filters: { id: ids, sales_channel_id: tenant.sales_channel_id },
   })
   const orders = data
     .map((o) => {

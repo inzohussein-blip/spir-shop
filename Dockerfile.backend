@@ -23,5 +23,7 @@ WORKDIR /app/apps/backend/.medusa/server
 # uploaded files (mount a volume here)
 RUN mkdir -p static
 EXPOSE 9000
-# migrations + idempotent demo data, then the server
-CMD ["sh", "-c", "npx medusa db:migrate && npx medusa exec ./src/scripts/seed-admin.js && if [ \"$SEED_DEMO\" = \"true\" ]; then npx medusa exec ./src/scripts/seed-demo-brands.js; npx medusa exec ./src/scripts/seed-demo-sale.js; npx medusa exec ./src/scripts/seed-figma-layout.js; npx medusa exec ./src/scripts/seed-demo-tenant.js; fi; npx medusa start"]
+COPY --from=build /app/apps/backend/deploy /app/apps/backend/deploy
+# Release tasks (migrations, first admin, demo data) live in deploy/release.sh.
+# On Railway they run as the pre-deploy command; elsewhere start.sh runs them first.
+CMD ["sh", "/app/apps/backend/deploy/start.sh"]

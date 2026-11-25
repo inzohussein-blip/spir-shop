@@ -1,6 +1,6 @@
 import type { MedusaContainer } from "@medusajs/framework"
-import type { MedusaRequest } from "@medusajs/framework/http"
-import { MedusaError } from "@medusajs/framework/utils"
+import type { AuthenticatedMedusaRequest, MedusaRequest } from "@medusajs/framework/http"
+import { MedusaError, Modules } from "@medusajs/framework/utils"
 import { APP_CONTENT_MODULE } from "../modules/app_content"
 import type AppContentModuleService from "../modules/app_content/service"
 import { AppSettings, DEFAULT_APP_SETTINGS } from "./app-settings"
@@ -76,11 +76,57 @@ export async function tenantFromStoreRequest(req: MedusaRequest): Promise<Tenant
   return t
 }
 
-/** Store selected in the admin (x-tenant-id header), else the default one. */
+/**
+ * Platform admins manage every store; any other admin user only manages the
+ * stores whose `owner_email` is their email. Platform admins are listed in
+ * PLATFORM_ADMIN_EMAILS (comma separated), falling back to ADMIN_EMAIL. When
+ * neither is set (local development, single store) every admin is a platform admin.
+ */
+const platformAdminEmails = (): string[] =>
+  (process.env.PLATFORM_ADMIN_EMAILS || process.env.ADMIN_EMAIL || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+
+async function adminEmail(req: MedusaRequest): Promise<string | null> {
+  const actorId = (req as AuthenticatedMedusaRequest).auth_context?.actor_id
+  if (!actorId) return null
+  const users = req.scope.resolve(Modules.USER)
+  const user = await users.retrieveUser(actorId).catch(() => null)
+  return user?.email?.toLowerCase() ?? null
+}
+
+export type AdminAccess = { platform: boolean; tenants: TenantRecord[] }
+
+/** Which stores the logged-in admin user may manage. */
+export async function adminAccess(req: MedusaRequest, fresh = false): Promise<AdminAccess> {
+  const list = await listTenants(req.scope, fresh)
+  const admins = platformAdminEmails()
+  const email = await adminEmail(req)
+  if (!admins.length || (email && admins.includes(email))) return { platform: true, tenants: list }
+  return { platform: false, tenants: list.filter((t) => !!email && t.owner_email?.toLowerCase() === email) }
+}
+
+export async function requirePlatformAdmin(req: MedusaRequest): Promise<void> {
+  if (!(await adminAccess(req)).platform) {
+    throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "هذا الإجراء لمدير المنصة فقط")
+  }
+}
+
+/**
+ * Store selected in the admin (x-tenant-id header), else the user's default
+ * store. Refuses a store the user doesn't manage.
+ */
 export async function tenantFromAdminRequest(req: MedusaRequest): Promise<TenantRecord> {
   const id = String(req.headers["x-tenant-id"] ?? "")
-  const list = await listTenants(req.scope)
-  return (id && list.find((x) => x.id === id)) || (await defaultTenant(req.scope))
+  const { tenants } = await adminAccess(req)
+  if (!tenants.length) throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "لا يوجد متجر مرتبط بحسابك")
+  if (id) {
+    const t = tenants.find((x) => x.id === id)
+    if (!t) throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "ليس لديك صلاحية على هذا المتجر")
+    return t
+  }
+  return tenants.find((x) => x.is_default) ?? tenants[0]
 }
 
 export const tenantSettings = (t: TenantRecord): AppSettings => ({ ...DEFAULT_APP_SETTINGS, ...(t.settings ?? {}) })

@@ -103,11 +103,32 @@ npm run dev                      # http://localhost:8000
 > ⚠️ ميزة وسم المنتجات في المنشورات ومتجر إنستغرام قد لا تكون مفعّلة للحسابات في العراق. حتى بدونها، الكتالوج يُستخدم لإعلانات الكتالوج الديناميكية (Advantage+ Catalog Ads).
 > كل منتج يحتاج صورة حتى يقبله ميتا — أضف الصور من لوحة التحكم.
 
-## النشر (مقترح)
+## النشر
 
-- سيرفر VPS بذاكرة 2GB أو أكثر (مثل Hetzner أو DigitalOcean): PostgreSQL + Redis + الخلفية + المتجر، وخلفهم Caddy أو Nginx لشهادات HTTPS.
-- غيّر `JWT_SECRET` و `COOKIE_SECRET` لقيم عشوائية طويلة، وحدّث `STORE_CORS` و `ADMIN_CORS` و `AUTH_CORS` بالدومينات الحقيقية.
-- صور المنتجات: الإعداد الافتراضي يخزنها محلياً. للإنتاج يُنصح بـ S3 أو Cloudflare R2 (موديول `@medusajs/file-s3`).
+| الجزء | المنصة | ملاحظات |
+|---|---|---|
+| الخلفية + لوحة التحكم | **Railway** (خدمة `backend` من `Dockerfile.backend`) | مع Postgres و Redis على نفس المشروع، و volume على `.medusa/server/static` للملفات المرفوعة |
+| متجر الويب | **Vercel** (المجلد `apps/storefront`) | الإعدادات في `apps/storefront/vercel.json` |
+| تطبيق الموبايل | GitHub Actions ← Releases | انظر `.github/workflows/android-apk.yml` |
+
+### الخلفية على Railway
+- **Pre-deploy command:** `sh /app/apps/backend/deploy/release.sh`، وهو يشغّل الـ migrations وينشئ أول مدير (ومعه البيانات التجريبية إذا كان `SEED_DEMO=true`). يشتغل مرة وحدة قبل كل نشر، وإذا فشل يبقى الإصدار القديم شغّال.
+- **المتغيرات:** `RUN_RELEASE_ON_START=false` (لأن الـ pre-deploy يتكفّل بالمهمة)، و `DATABASE_URL=${{Postgres.DATABASE_URL}}`، و `REDIS_URL=${{Redis.REDIS_URL}}`، و `JWT_SECRET` و `COOKIE_SECRET` بقيم عشوائية طويلة، و `ADMIN_EMAIL` و `ADMIN_PASSWORD`.
+- **فحص الصحة:** `/health`.
+- `STORE_CORS` و `AUTH_CORS` لازم تحتوي دومين متجر Vercel.
+- على أي استضافة Docker ثانية: `start.sh` يشغّل `release.sh` تلقائياً قبل تشغيل السيرفر.
+
+### متجر الويب على Vercel
+- Root Directory: `apps/storefront`.
+- المتغيرات: `NEXT_PUBLIC_MEDUSA_BACKEND_URL` (رابط Railway)، و `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` (من `GET <backend>/mobile/config`، أو من لوحة التحكم ← Settings ← Publishable API Keys)، و `NEXT_PUBLIC_DEFAULT_REGION=iq`، و `NEXT_PUBLIC_BASE_URL` (دومين المتجر).
+
+### صلاحيات المتاجر
+- مدير المنصة (`PLATFORM_ADMIN_EMAILS`، وإذا ما موجود فـ `ADMIN_EMAIL`) يدير كل المتاجر.
+- أي مستخدم ثاني باللوحة يشوف ويعدّل فقط المتاجر اللي بريد مالكها («owner_email») هو بريده: المصمم، القصص، الإشعارات، الإعدادات، التقييمات، وتأكيد الطلب.
+- صفحات Medusa الأساسية (المنتجات، الطلبات، الزبائن) بعدها مشتركة. لعزل كامل يحتاج كل صاحب متجر لوحة منفصلة.
+
+### للإنتاج
+- الصور تنحفظ على volume في Railway. إذا كبر المتجر أو صار يشتغل على أكثر من نسخة، انقلها لـ Cloudflare R2 أو S3 (`@medusajs/file-s3`).
 
 ## المراحل القادمة
 
@@ -128,7 +149,7 @@ npm run dev                      # http://localhost:8000
   - كل صفحات التطبيق باللوحة (المصمم، القصص، الإشعارات، الإعدادات، التقييمات) فيها اختيار المتجر
   - المنتجات: من صفحة المنتج ← «قنوات البيع» اختر قناة المتجر
   - تطبيق لكل متجر: `apps/mobile/stores/<slug>.json` ثم GitHub ← Actions ← Android APK ← Run workflow ← `store`
-- [ ] دخول صاحب كل متجر للوحة يشوف متجره فقط (حالياً المدير يدير كل المتاجر)
+- [x] صاحب كل متجر يدير صفحات التطبيق الخاصة بمتجره فقط (انظر «صلاحيات المتاجر»)
 - [ ] الدفع الإلكتروني: زين كاش، FIB، Qi Card (Payment Module مخصص)
 - [ ] ردود تلقائية على رسائل إنستغرام وماسنجر
 - [ ] تسجيل الدخول برقم الهاتف (OTP)
