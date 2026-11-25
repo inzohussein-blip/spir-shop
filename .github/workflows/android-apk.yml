@@ -133,16 +133,24 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "$APP_NAME ($STORE) $VERSION (versionCode $CODE), tag $TAG, build=$BUILD"
 
+  # Two apps from the same code, built side by side:
+  #   customer - the shop (spir-shop-X.Y.Z.apk)
+  #   admin    - the store manager's app: orders, products, ads (spir-shop-admin-X.Y.Z.apk)
   build:
     needs: prepare
     if: needs.prepare.outputs.build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    strategy:
+      fail-fast: true
+      matrix:
+        variant: [customer, admin]
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
       VERSION_CODE: ${{ needs.prepare.outputs.code }}
       APP_STORE: ${{ needs.prepare.outputs.store }}
-      APK_NAME: ${{ needs.prepare.outputs.store == 'spir' && 'spir-shop' || needs.prepare.outputs.store }}
+      APP_VARIANT: ${{ matrix.variant }}
+      APK_NAME: ${{ format('{0}{1}', needs.prepare.outputs.store == 'spir' && 'spir-shop' || needs.prepare.outputs.store, matrix.variant == 'admin' && '-admin' || '') }}
       ANDROID_NDK_VERSION: "27.1.12297006"
     steps:
       - uses: actions/checkout@v5
@@ -246,12 +254,21 @@ jobs:
           path: apps/mobile/dist/*.apk
           retention-days: 30
 
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: apks
+          merge-multiple: true
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: ${{ needs.prepare.outputs.app_name }} ${{ env.VERSION }}
+          name: ${{ needs.prepare.outputs.app_name }} ${{ needs.prepare.outputs.version }}
           body: ${{ needs.prepare.outputs.notes }}
-          files: apps/mobile/dist/${{ env.APK_NAME }}-${{ env.VERSION }}.apk
+          files: apks/*.apk
           make_latest: ${{ needs.prepare.outputs.store == 'spir' && 'true' || 'false' }}

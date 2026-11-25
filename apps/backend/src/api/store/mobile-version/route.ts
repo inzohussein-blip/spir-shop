@@ -23,13 +23,15 @@ import { tenantFromStoreRequest } from "../../../lib/tenant"
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const tenant = await tenantFromStoreRequest(req)
+  // ?app=admin: the store manager's app, released next to the customer app (GitHub only)
+  const app = req.query.app === "admin" ? "admin" : "customer"
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const {
     data: [store],
   } = await query.graph({ entity: "store", fields: ["metadata"], pagination: { take: 1 } })
 
   // admin-defined values belong to the default store's app; other stores use their own GitHub releases
-  const meta = (tenant.is_default ? store?.metadata ?? {} : {}) as Record<string, unknown>
+  const meta = (tenant.is_default && app === "customer" ? store?.metadata ?? {} : {}) as Record<string, unknown>
   const pick = (key: string, env: string, fallback = "") =>
     String(meta[key] ?? process.env[env] ?? fallback)
 
@@ -42,7 +44,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     source: "admin" as "admin" | "github",
   }
 
-  const gh = await getLatestGithubRelease(tenant.is_default ? null : tenant.slug)
+  const gh = await getLatestGithubRelease(tenant.is_default ? null : tenant.slug, app)
   if (gh && compareVersions(gh.version, info.latest_version) > 0) {
     info.latest_version = gh.version
     info.android_url = gh.apkUrl

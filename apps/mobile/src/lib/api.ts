@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { getBackendUrl, PUBLISHABLE_KEY, STORE_SLUG } from "./config"
+import { IS_ADMIN_APP } from "./variant"
 
 /**
  * Publishable key: baked in at build time when EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY
@@ -196,7 +197,7 @@ export type VersionInfo = {
   ios_url: string
   message: string
 }
-export const getVersionInfo = () => storeFetch<VersionInfo>("/mobile-version")
+export const getVersionInfo = () => storeFetch<VersionInfo>(IS_ADMIN_APP ? "/mobile-version?app=admin" : "/mobile-version")
 
 /* ----------------------- server-driven UI & content ---------------------- */
 

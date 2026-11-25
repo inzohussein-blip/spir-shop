@@ -44,6 +44,8 @@ GRADLE_ARGS+=("-Dorg.gradle.internal.repository.max.retries=8" "-Dorg.gradle.int
 mkdir -p dist
 # APP_STORE picks the store (stores/<slug>.json); the default store keeps the old file name
 NAME="spir-shop"
-[ -n "$APP_STORE" ] && [ "$APP_STORE" != "spir" ] && NAME="$APP_STORE"
+[ -n "${APP_STORE:-}" ] && [ "$APP_STORE" != "spir" ] && NAME="$APP_STORE"
+# APP_VARIANT=admin: the store manager's app (separate package id, see app.config.js)
+[ "${APP_VARIANT:-}" = "admin" ] && NAME="$NAME-admin"
 cp android/app/build/outputs/apk/release/app-release.apk "dist/$NAME-$VERSION.apk"
 echo "APK: $(pwd)/dist/$NAME-$VERSION.apk"

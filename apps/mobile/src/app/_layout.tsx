@@ -12,6 +12,7 @@ import { COLORS } from "../lib/config"
 import { DrawerProvider } from "../lib/drawer"
 import { openLink } from "../lib/links"
 import { syncPushToken } from "../lib/push"
+import { IS_ADMIN_APP } from "../lib/variant"
 
 /** Registers the push token (with the current cart) and opens links from tapped notifications. */
 function PushBridge() {
@@ -51,7 +52,8 @@ export default function RootLayout() {
         {/* dir="rtl" makes react-native-web lay out right-to-left; native uses forcesRTL in app.json */}
         <View style={{ flex: 1, backgroundColor: COLORS.bg }} {...({ dir: "rtl" } as object)}>
           <StatusBar style="dark" />
-          <PushBridge />
+          {/* the manager app doesn't register as a customer device */}
+          {IS_ADMIN_APP ? null : <PushBridge />}
           <DrawerProvider>
             {/* Every screen draws its own header (components/Header) to match the design */}
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.bg } }}>

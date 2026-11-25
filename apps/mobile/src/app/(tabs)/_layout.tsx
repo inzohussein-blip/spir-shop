@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router"
+import { Redirect, Tabs } from "expo-router"
 import type { ComponentProps } from "react"
 import { Pressable, StyleSheet, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -6,6 +6,7 @@ import Icon, { IconName } from "../../components/Icon"
 import Text from "../../components/Text"
 import { useCart } from "../../lib/cart"
 import { COLORS, IS_NATURAL, SHADOW } from "../../lib/config"
+import { IS_ADMIN_APP } from "../../lib/variant"
 
 type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0]
 type BottomTabBarProps = TabBarProps & {
@@ -72,6 +73,8 @@ function TabIcon({ name, focused, badge }: { name: IconName; focused: boolean; b
 /** Bottom bar: four icons (home, discover, cart, profile). Look depends on the theme. */
 export default function TabsLayout() {
   const { count } = useCart()
+  // the manager app opens on its own screens
+  if (IS_ADMIN_APP) return <Redirect href="/admin" />
   return (
     <Tabs
       tabBar={IS_NATURAL ? (props) => <FloatingTabBar {...(props as BottomTabBarProps)} /> : undefined}

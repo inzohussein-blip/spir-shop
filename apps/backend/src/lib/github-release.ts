@@ -18,10 +18,10 @@ const CACHE_MS = 10 * 60 * 1000
 const cache = new Map<string, { at: number; value: GithubRelease | null }>()
 
 /** Latest release of a store's app: tags "vX.Y.Z" for the default store, "<slug>-vX.Y.Z" for the others. */
-export async function getLatestGithubRelease(storeSlug?: string | null): Promise<GithubRelease | null> {
+export async function getLatestGithubRelease(storeSlug?: string | null, app: "customer" | "admin" = "customer"): Promise<GithubRelease | null> {
   const repo = process.env.MOBILE_GITHUB_REPO
   if (!repo) return null
-  const key = storeSlug ?? ""
+  const key = `${storeSlug ?? ""}:${app}`
   const hit = cache.get(key)
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.value
   const prefix = storeSlug ? `${storeSlug}-v` : "v"
@@ -48,7 +48,11 @@ export async function getLatestGithubRelease(storeSlug?: string | null): Promise
         .filter((x) => !x.draft && !x.prerelease && x.tag_name.startsWith(prefix) && /^\d+\.\d+\.\d+$/.test(x.tag_name.slice(prefix.length)))
         .sort((a, b) => compareVersions(b.tag_name.slice(prefix.length), a.tag_name.slice(prefix.length)))
       const r = mine[0]
-      const apk = r?.assets.find((a) => a.name.toLowerCase().endsWith(".apk"))
+      // a release carries both apps: "<name>-<version>.apk" and the manager app "<name>-admin-<version>.apk"
+      const apk = r?.assets.find((a) => {
+        const name = a.name.toLowerCase()
+        return name.endsWith(".apk") && name.includes("-admin-") === (app === "admin")
+      })
       const version = r ? r.tag_name.slice(prefix.length) : ""
       if (r && apk) {
         const notes = (r.body ?? "").replace(/\[required\]/gi, "").trim()
