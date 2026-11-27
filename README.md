@@ -192,3 +192,4 @@ npm run dev                      # http://localhost:8000
 - [ ] الدفع الإلكتروني: زين كاش، FIB، Qi Card (Payment Module مخصص)
 - [ ] ردود تلقائية على رسائل إنستغرام وماسنجر
 - [ ] تسجيل الدخول برقم الهاتف (OTP)
+- [ ] Firebase: تقارير الأعطال (Crashlytics)، تسجيل الدخول بالهاتف، والإحصائيات. الخطة الكاملة بـ [docs/firebase-plan.md](docs/firebase-plan.md)
