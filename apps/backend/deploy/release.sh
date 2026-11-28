@@ -11,4 +11,5 @@ if [ "$SEED_DEMO" = "true" ]; then
   npx medusa exec ./src/scripts/seed-demo-sale.js
   npx medusa exec ./src/scripts/seed-figma-layout.js
   npx medusa exec ./src/scripts/seed-demo-tenant.js
+  npx medusa exec ./src/scripts/seed-demo-catalog.js
 fi
