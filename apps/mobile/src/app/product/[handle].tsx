@@ -46,14 +46,14 @@ export default function ProductScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
-  const { addItem, loading } = useCart()
-  const { isWished, toggleWish, features } = useStore()
+  const { addItem, loading, count } = useCart()
+  const { isWished, toggleWish, features, settings } = useStore()
   const [product, setProduct] = useState<Product | null>(null)
   const [similar, setSimilar] = useState<Product[]>([])
   const [reviews, setReviews] = useState<{ summary: ReviewSummary; reviews: Review[] } | null>(null)
   const [variantId, setVariantId] = useState<string | null>(null)
   const [imageIndex, setImageIndex] = useState(0)
-  const [open, setOpen] = useState<Section[]>([])
+  const [open, setOpen] = useState<Section[]>(IS_NATURAL ? [] : ["description", "reviews"])
   const [more, setMore] = useState(false)
   const [qty, setQty] = useState(1)
   const [error, setError] = useState(false)
@@ -66,7 +66,7 @@ export default function ProductScreen() {
         const firstInStock = p.variants.find((v) => !v.manage_inventory || v.allow_backorder || (v.inventory_quantity ?? 0) > 0)
         setVariantId((firstInStock ?? p.variants[0])?.id ?? null)
         getReviews(p.id).then(setReviews).catch(() => undefined)
-        listProducts({ categoryId: p.categories?.[0]?.id, limit: 8 })
+        listProducts({ categoryId: p.categories?.[0]?.id, limit: 9 })
           .then((list) => setSimilar(list.filter((x) => x.id !== p.id)))
           .catch(() => undefined)
       })
@@ -148,7 +148,7 @@ export default function ProductScreen() {
         <ReviewsPanel data={reviews} onWrite={() => router.push("/orders")} />
       </Collapsible>
       ) : null}
-      {similar.length ? (
+      {similar.length && IS_NATURAL ? (
         <Collapsible title="منتجات مشابهة" open={open.includes("similar")} onToggle={() => toggle("similar")} testID="tab-similar">
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 12, paddingHorizontal: 20 }}>
             {similar.map((p) => (
@@ -156,6 +156,18 @@ export default function ProductScreen() {
             ))}
           </ScrollView>
         </Collapsible>
+      ) : null}
+      {similar.length && !IS_NATURAL ? (
+        <View style={{ paddingTop: 18, gap: 10 }} testID="you-may-like">
+          <Text style={styles.sectionTitle}>قد يعجبك أيضاً</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", marginHorizontal: -12 }}>
+            {similar.slice(0, 8).map((p) => (
+              <View key={p.id} style={{ width: "50%", paddingHorizontal: 4 }}>
+                <ProductCard product={p} />
+              </View>
+            ))}
+          </View>
+        </View>
       ) : null}
     </>
   )
@@ -281,16 +293,27 @@ export default function ProductScreen() {
     )
   }
 
+  // Default theme: shop-style page (big photo gallery, price block, options, delivery info,
+  // details, "you may also like" grid, and a fixed bar with "add to cart" and "buy now")
+  const galleryH = Math.min(Math.round((width * 4) / 3), 560)
+  const pct = onSale ? Math.round((1 - (price ?? 0) / (original ?? 1)) * 100) : 0
+  const buyNow = async () => {
+    if (!variant) return
+    try {
+      await addItem(variant.id, 1)
+      router.push("/checkout")
+    } catch (e) {
+      Alert.alert("خطأ", (e as Error).message)
+    }
+  }
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}>
-        {/* Photo on a soft circle, page dots, back and wishlist buttons */}
-        <View style={[styles.hero, { height: 400 + insets.top }]}>
-          <View style={[styles.heroCircle, { top: insets.top + 90 }]} />
+      <ScrollView contentContainerStyle={{ paddingBottom: 90 + insets.bottom }}>
+        <View style={{ height: galleryH + insets.top, backgroundColor: COLORS.soft }}>
           {images.length ? (
-            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={onGalleryScroll}>
+            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={onGalleryScroll} testID="gallery">
               {images.map((u) => (
-                <Image key={u} source={u} style={{ width, height: 400 + insets.top }} contentFit="cover" />
+                <Image key={u} source={u} style={{ width, height: galleryH + insets.top }} contentFit="cover" />
               ))}
             </ScrollView>
           ) : (
@@ -299,138 +322,137 @@ export default function ProductScreen() {
             </View>
           )}
           {images.length > 1 ? (
-            <View style={styles.dots}>
-              {images.map((u, i) => (
-                <View key={u} style={[styles.dot, i === imageIndex && styles.dotOn]} />
-              ))}
+            <View style={s2.counter}>
+              <Text style={s2.counterText}>{`\u200E${imageIndex + 1}/${images.length}`}</Text>
             </View>
           ) : null}
           <View style={[styles.topBar, { top: insets.top + 12 }]}>
             <BackButton />
-            {features.wishlist ? <Pressable style={styles.heartBtn} onPress={() => toggleWish(product.id)} accessibilityLabel="المفضلة" testID="product-wish">
-              <HeartIcon filled={isWished(product.id)} size={20} color="#ff6464" />
-            </Pressable> : <View />}
+            <Pressable style={styles.heartBtn} onPress={() => router.push("/cart")} accessibilityLabel="السلة" testID="product-cart">
+              <Icon name="shopping-bag" size={18} color={COLORS.primaryDark} />
+              {count ? (
+                <View style={s2.cartBadge}>
+                  <Text style={s2.cartBadgeText}>{count > 9 ? "9+" : count}</Text>
+                </View>
+              ) : null}
+            </Pressable>
           </View>
         </View>
 
-        <View style={styles.sheet}>
-          <View style={styles.titleRow}>
-            <View style={{ flex: 1, gap: 10 }}>
-              <Text style={styles.title}>{product.title}</Text>
-              {features.reviews && reviews?.summary.count ? (
-                <Pressable onPress={() => !open.includes("reviews") && toggle("reviews")}>
-                  <Stars value={reviews.summary.average} count={reviews.summary.count} size={19} gap={3} />
-                </Pressable>
-              ) : null}
-            </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.price}>{formatIqd(price)}</Text>
-              {onSale ? <Text style={styles.old}>{formatIqd(original)}</Text> : null}
-            </View>
-          </View>
-
-          {colorVariants.length || sizeVariants.length ? (
-            <View style={styles.options}>
-              {colorVariants.length ? (
-                <View style={{ gap: 12, flex: 1 }}>
-                  <Text style={styles.optLabel}>اللون</Text>
-                  <View style={styles.optRow}>
-                    {colorVariants.map((v) => {
-                      const active = v.id === variantId
-                      return (
-                        <Pressable
-                          key={v.id}
-                          onPress={() => setVariantId(v.id)}
-                          style={[styles.swatchWrap, active && styles.swatchActive, !inStockOf(v) && { opacity: 0.35 }]}
-                          accessibilityLabel={v.title}
-                          testID={`swatch-${v.title}`}
-                        >
-                          <View style={[styles.swatch, { backgroundColor: swatchFor(v)! }]} />
-                        </Pressable>
-                      )
-                    })}
-                  </View>
-                  {variant && swatchFor(variant) ? <Text style={styles.optValue}>{variant.title}</Text> : null}
-                </View>
-              ) : null}
-              {sizeVariants.length ? (
-                <View style={{ gap: 12, flex: colorVariants.length ? 0 : 1 }}>
-                  <Text style={styles.optLabel}>الحجم</Text>
-                  <View style={styles.optRow}>
-                    {sizeVariants.map((v) => {
-                      const active = v.id === variantId
-                      return (
-                        <Pressable
-                          key={v.id}
-                          onPress={() => setVariantId(v.id)}
-                          style={[styles.size, active && styles.sizeActive, !inStockOf(v) && { opacity: 0.4 }]}
-                          testID={`size-${v.title}`}
-                        >
-                          <Text style={[styles.sizeText, active && { color: COLORS.onStrong }]} numberOfLines={1}>
-                            {v.title}
-                          </Text>
-                        </Pressable>
-                      )
-                    })}
-                  </View>
-                </View>
-              ) : null}
-            </View>
-          ) : null}
-
-          <Collapsible title="الوصف" open={open.includes("description")} onToggle={() => toggle("description")} testID="tab-description">
-            <Text style={styles.body} numberOfLines={more || !longText ? undefined : 4}>
-              {description || "-"}
+        <View style={s2.block}>
+          <View style={s2.priceRow}>
+            <Text style={[s2.price, onSale && { color: COLORS.sale }]} testID="product-price">
+              {formatIqd(price)}
             </Text>
-            {longText && !more ? (
-              <Pressable onPress={() => setMore(true)}>
-                <Text style={styles.readMore}>اقرأ المزيد</Text>
-              </Pressable>
+            {onSale ? (
+              <>
+                <Text style={s2.old}>{formatIqd(original)}</Text>
+                <View style={s2.pct}>
+                  <Text style={s2.pctText}>{`\u200E-${pct}%`}</Text>
+                </View>
+              </>
             ) : null}
-          </Collapsible>
-          {howTo ? (
-            <Collapsible title="طريقة الاستخدام" open={open.includes("how")} onToggle={() => toggle("how")} testID="tab-how">
-              <Text style={styles.body}>{howTo}</Text>
-            </Collapsible>
+          </View>
+          <Text style={s2.title}>{product.title}</Text>
+          {features.reviews && reviews?.summary.count ? (
+            <Pressable onPress={() => !open.includes("reviews") && toggle("reviews")} style={s2.ratingRow}>
+              <Stars value={reviews.summary.average} size={13} gap={1} />
+              <Text style={s2.ratingText}>{`${reviews.summary.average.toFixed(1)} · ${reviews.summary.count} تقييم`}</Text>
+            </Pressable>
           ) : null}
-          {ingredients ? (
-            <Collapsible title="المكونات" open={open.includes("ingredients")} onToggle={() => toggle("ingredients")} testID="tab-ingredients">
-              <Text style={styles.body}>{ingredients}</Text>
-            </Collapsible>
-          ) : null}
-          {features.reviews ? (
-          <Collapsible title="التقييمات" open={open.includes("reviews")} onToggle={() => toggle("reviews")} testID="tab-reviews">
-            <ReviewsPanel data={reviews} onWrite={() => router.push("/orders")} />
-          </Collapsible>
-          ) : null}
-          {similar.length ? (
-            <Collapsible title="منتجات مشابهة" open={open.includes("similar")} onToggle={() => toggle("similar")} testID="tab-similar">
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -24 }} contentContainerStyle={{ gap: 16, paddingHorizontal: 24 }}>
-                {similar.map((p) => (
-                  <ProductCard key={p.id} product={p} variant="featured" />
-                ))}
-              </ScrollView>
-            </Collapsible>
+          {features.brands && product.collection ? (
+            <Pressable onPress={() => router.push(`/brand/${product.collection!.id}`)} style={s2.brand} testID="product-brand">
+              <Text style={s2.brandText}>{`الماركة: ${product.collection.title}`}</Text>
+              <Icon name="chevron-left" size={16} color={COLORS.muted} />
+            </Pressable>
           ) : null}
         </View>
+
+        {colorVariants.length || sizeVariants.length ? (
+          <View style={[s2.block, s2.gapTop]}>
+            {colorVariants.length ? (
+              <View style={{ gap: 10 }}>
+                <Text style={s2.optLabel}>
+                  اللون: <Text style={{ fontWeight: "700" }}>{variant && swatchFor(variant) ? variant.title : ""}</Text>
+                </Text>
+                <View style={styles.optRow}>
+                  {colorVariants.map((v) => (
+                    <Pressable
+                      key={v.id}
+                      onPress={() => setVariantId(v.id)}
+                      style={[s2.swatchWrap, v.id === variantId && s2.swatchOn, !inStockOf(v) && { opacity: 0.35 }]}
+                      accessibilityLabel={v.title}
+                      testID={`swatch-${v.title}`}
+                    >
+                      <View style={[styles.swatch, { width: 30, height: 30, borderRadius: 15, backgroundColor: swatchFor(v)! }]} />
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+            {sizeVariants.length ? (
+              <View style={{ gap: 10, marginTop: colorVariants.length ? 14 : 0 }}>
+                <Text style={s2.optLabel}>الحجم</Text>
+                <View style={styles.optRow}>
+                  {sizeVariants.map((v) => (
+                    <Pressable
+                      key={v.id}
+                      onPress={() => setVariantId(v.id)}
+                      style={[s2.size, v.id === variantId && s2.sizeOn, !inStockOf(v) && { opacity: 0.4 }]}
+                      testID={`size-${v.title}`}
+                    >
+                      <Text style={[s2.sizeText, v.id === variantId && { fontWeight: "700" }]} numberOfLines={1}>
+                        {v.title}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        <View style={[s2.block, s2.gapTop, { gap: 12 }]}>
+          <View style={s2.service}>
+            <Icon name="truck" size={17} color={COLORS.primaryDark} />
+            <Text style={s2.serviceText}>
+              {`توصيل لكل المحافظات · بغداد ${settings.baghdad_eta} · المحافظات ${settings.provinces_eta}`}
+            </Text>
+          </View>
+          {settings.free_shipping_threshold > 0 ? (
+            <View style={s2.service}>
+              <Icon name="gift" size={17} color={COLORS.sale} />
+              <Text style={s2.serviceText}>{`توصيل مجاني للطلبات فوق ${formatIqd(settings.free_shipping_threshold)}`}</Text>
+            </View>
+          ) : null}
+          <View style={s2.service}>
+            <Icon name="dollar-sign" size={17} color={COLORS.primaryDark} />
+            <Text style={s2.serviceText}>الدفع نقداً عند الاستلام</Text>
+          </View>
+          <View style={s2.service}>
+            <Icon name="shield" size={17} color={COLORS.primaryDark} />
+            <Text style={s2.serviceText}>منتجات أصلية 100%</Text>
+          </View>
+        </View>
+
+        <View style={[s2.block, s2.gapTop, { paddingVertical: 0 }]}>{sections}</View>
       </ScrollView>
 
-      {/* Full-width dark "add to cart" bar */}
-      <Pressable
-        style={[styles.addBar, { paddingBottom: 18 + insets.bottom }, (!inStock || loading) && { backgroundColor: "#6b6b6b" }]}
-        disabled={!inStock || loading}
-        onPress={onAdd}
-        testID="add-to-cart"
-      >
-        {loading ? (
-          <ActivityIndicator color={COLORS.onPrimary} />
-        ) : (
-          <View style={styles.addRow}>
-            <Icon name="shopping-bag" size={20} color={COLORS.onPrimary} />
-            <Text style={styles.addText}>{inStock ? "أضيفي للسلة" : "نفد من المخزون"}</Text>
-          </View>
-        )}
-      </Pressable>
+      <View style={[s2.bar, { paddingBottom: 10 + insets.bottom }]}>
+        {features.wishlist ? (
+          <Pressable style={s2.iconBtn} onPress={() => toggleWish(product.id)} accessibilityLabel="المفضلة" testID="product-wish">
+            <HeartIcon filled={isWished(product.id)} size={22} color={isWished(product.id) ? COLORS.sale : COLORS.primaryDark} />
+          </Pressable>
+        ) : null}
+        <Pressable style={[s2.addBtn, (!inStock || loading) && { opacity: 0.5 }]} disabled={!inStock || loading} onPress={onAdd} testID="add-to-cart">
+          {loading ? <ActivityIndicator color={COLORS.primaryDark} /> : <Text style={s2.addText}>{inStock ? "أضيفي للسلة" : "نفد من المخزون"}</Text>}
+        </Pressable>
+        {inStock ? (
+          <Pressable style={[s2.buyBtn, loading && { opacity: 0.5 }]} disabled={loading} onPress={buyNow} testID="buy-now">
+            <Text style={s2.buyText}>اشتري الآن</Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   )
 }
@@ -594,4 +616,38 @@ const n = StyleSheet.create({
   total: { fontSize: 20, fontWeight: "700" },
   add: { flexDirection: "row", alignItems: "center", gap: 8, height: 54, borderRadius: 27, paddingHorizontal: 22, backgroundColor: COLORS.primary },
   addText: { color: COLORS.onPrimary, fontSize: 15, fontWeight: "700" },
+})
+
+/** Styles of the default (shop-style) product page */
+const s2 = StyleSheet.create({
+  counter: { position: "absolute", bottom: 12, end: 12, backgroundColor: "rgba(0,0,0,0.45)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
+  counterText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  cartBadge: { position: "absolute", top: -4, end: -4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.sale, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
+  cartBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700" },
+  block: { backgroundColor: COLORS.card, paddingHorizontal: 16, paddingVertical: 14 },
+  gapTop: { borderTopWidth: 8, borderTopColor: "#f6f6f6" },
+  priceRow: { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" },
+  price: { fontSize: 24, fontWeight: "700", color: COLORS.primaryDark },
+  old: { fontSize: 13, color: "#a8a8ad", textDecorationLine: "line-through" },
+  pct: { backgroundColor: COLORS.saleSoft, borderWidth: 1, borderColor: COLORS.sale, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 },
+  pctText: { color: COLORS.sale, fontSize: 12, fontWeight: "700" },
+  title: { fontSize: 15, lineHeight: 23, marginTop: 8, color: COLORS.text },
+  ratingRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
+  ratingText: { fontSize: 12, color: COLORS.muted },
+  brand: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "#f1f1f1" },
+  brandText: { fontSize: 13, fontWeight: "500" },
+  optLabel: { fontSize: 13, color: COLORS.text },
+  swatchWrap: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "transparent" },
+  swatchOn: { borderColor: COLORS.primaryDark },
+  size: { minWidth: 56, height: 36, borderRadius: 4, paddingHorizontal: 14, borderWidth: 1, borderColor: "#d9d9dc", alignItems: "center", justifyContent: "center" },
+  sizeOn: { borderColor: COLORS.primaryDark, borderWidth: 1.5 },
+  sizeText: { fontSize: 13, color: COLORS.text },
+  service: { flexDirection: "row", alignItems: "center", gap: 10 },
+  serviceText: { fontSize: 13, color: COLORS.text, flex: 1 },
+  bar: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: COLORS.card, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#eeeeee" },
+  iconBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  addBtn: { flex: 1, height: 46, borderRadius: 4, borderWidth: 1.5, borderColor: COLORS.primaryDark, alignItems: "center", justifyContent: "center" },
+  addText: { fontSize: 15, fontWeight: "700", color: COLORS.primaryDark },
+  buyBtn: { flex: 1, height: 46, borderRadius: 4, backgroundColor: COLORS.sale, alignItems: "center", justifyContent: "center" },
+  buyText: { fontSize: 15, fontWeight: "700", color: "#fff" },
 })

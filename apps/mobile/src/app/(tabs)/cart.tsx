@@ -6,6 +6,8 @@ import Button from "../../components/Button"
 import Header from "../../components/Header"
 import Icon from "../../components/Icon"
 import Text from "../../components/Text"
+import FreeShippingBar from "../../components/FreeShippingBar"
+import Recommendations from "../../components/Recommendations"
 import { ShippingOption } from "../../lib/api"
 import { SavedLine, useCart } from "../../lib/cart"
 import { COLORS, SHADOW, TAB_SPACE } from "../../lib/config"
@@ -73,14 +75,17 @@ export default function CartScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
         <Header title="سلتك" />
-        <View style={styles.empty}>
-          <View style={styles.emptyIcon}>
-            <Icon name="shopping-bag" size={40} />
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 30 + TAB_SPACE }}>
+          <View style={styles.empty}>
+            <View style={styles.emptyIcon}>
+              <Icon name="shopping-bag" size={40} />
+            </View>
+            <Text style={{ fontSize: 20, fontWeight: "700" }}>سلتك فارغة</Text>
+            <Text style={{ color: COLORS.muted }}>أضيفي منتجاتك المفضلة وراح تظهر هنا</Text>
+            <Button label="تسوّقي الآن" onPress={() => router.push("/")} style={{ alignSelf: "stretch", marginTop: 12 }} />
           </View>
-          <Text style={{ fontSize: 20, fontWeight: "700" }}>سلتك فارغة</Text>
-          <Text style={{ color: COLORS.muted }}>أضيفي منتجاتك المفضلة وراح تظهر هنا</Text>
-          <Button label="تسوّقي الآن" onPress={() => router.push("/")} style={{ alignSelf: "stretch", marginTop: 12 }} />
-        </View>
+          <Recommendations title="منتجات ممكن تعجبك" />
+        </ScrollView>
       </View>
     )
   }
@@ -88,7 +93,8 @@ export default function CartScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
       <Header title="سلتك" />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 6, paddingBottom: 24, gap: 20 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24, gap: 16 }}>
+        <FreeShippingBar subtotal={cart?.item_total ?? itemsTotal} />
         {lines.map((l) => (
           <View key={l.key} style={[styles.card, !l.ticked && { opacity: 0.6 }]} testID="cart-item">
             <View style={styles.thumb}>
@@ -124,6 +130,7 @@ export default function CartScreen() {
             </View>
           </View>
         ))}
+        <Recommendations exclude={items.map((i) => i.product_id ?? "").filter(Boolean)} />
       </ScrollView>
 
       <View style={styles.summary}>
@@ -185,6 +192,6 @@ const styles = StyleSheet.create({
   sumRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: "#eeeeee" },
   sumLabel: { color: "#9b9b9b", fontSize: 14 },
   sumValue: { fontSize: 14 },
-  empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8, padding: 32 },
+  empty: { alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 48, paddingHorizontal: 16 },
   emptyIcon: { width: 96, height: 96, borderRadius: 48, backgroundColor: COLORS.soft, alignItems: "center", justifyContent: "center", marginBottom: 8 },
 })

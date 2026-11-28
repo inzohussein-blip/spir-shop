@@ -50,7 +50,8 @@ export function HeroCarousel({ props }: BlockProps) {
         style={{ borderRadius: IS_NATURAL ? 22 : 12 }}
       >
         {slides.map((s, i) =>
-          IS_NATURAL ? (
+          // natural theme card only for text banners; photo banners (text in the photo) show full width
+          IS_NATURAL && s.title ? (
             // natural theme: green card, small black tag, dark title, black "shop now" pill, photo on the side
             <Pressable key={i} onPress={() => openLink(router, s.link)} style={[styles.green, { width: width || 1 }]} testID={`slide-${i}`}>
               <View style={styles.greenText}>

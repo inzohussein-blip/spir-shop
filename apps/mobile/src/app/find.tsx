@@ -10,6 +10,9 @@ import { listProducts, Product } from "../lib/api"
 import { COLORS, FONTS, IS_NATURAL, SHADOW } from "../lib/config"
 import { addRecentSearch, getRecentSearches, saveRecentSearches } from "../lib/filters"
 
+/** Popular search terms shown before typing (demo list; edit to match the store's best sellers). */
+const TRENDING = ["سيروم", "واقي شمس", "عطر", "أحمر شفاه", "ماسكارا", "مرطب", "كريم أساس", "ماسك شعر"]
+
 /** Search (design: "search"): back, search field + filter, recent searches, popular this week. */
 export default function FindScreen() {
   const router = useRouter()
@@ -60,6 +63,17 @@ export default function FindScreen() {
           <Pressable style={styles.filterBtn} onPress={() => router.push({ pathname: "/category/[id]", params: { id: "all", filter: "1" } })} accessibilityLabel="فلتر">
             <Icon name="sliders" size={19} color="#5a5a5e" />
           </Pressable>
+        </View>
+
+        <View style={styles.titleRow}>
+          <Text style={styles.recentTitle}>🔥 الأكثر بحثاً</Text>
+        </View>
+        <View style={styles.chips}>
+          {TRENDING.map((t, i) => (
+            <Pressable key={t} style={[styles.chip, i < 3 && styles.hot]} onPress={() => search(t)} testID={`trend-${t}`}>
+              <Text style={[styles.chipText, i < 3 && { color: COLORS.sale, fontWeight: "700" }]}>{t}</Text>
+            </Pressable>
+          ))}
         </View>
 
         {recent.length ? (
@@ -130,4 +144,5 @@ const styles = StyleSheet.create({
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   chip: { flexDirection: "row", alignItems: "center", gap: 16, height: 38, paddingHorizontal: 18, borderRadius: 10, backgroundColor: IS_NATURAL ? COLORS.card : "#f8f8f8" },
   chipText: { fontSize: 14, color: "#4a4a4e" },
+  hot: { backgroundColor: COLORS.saleSoft },
 })

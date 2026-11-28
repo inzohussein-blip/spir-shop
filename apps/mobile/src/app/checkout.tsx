@@ -216,17 +216,25 @@ export default function Checkout() {
               <Text style={{ fontSize: 13, color: "#5a5a5e" }}>{`${form.province}، ${form.city} - ${form.address}`}</Text>
             </View>
             {totals}
-            <Pressable style={styles.agree} onPress={() => setAgree(!agree)} testID="agree-terms">
-              <View style={[styles.agreeBox, agree && { backgroundColor: COLORS.accent, borderColor: COLORS.accent }]}>
-                {agree ? <Icon name="check" size={13} color="#fff" /> : null}
-              </View>
-              <Text style={{ fontSize: 14 }}>
-                أوافق على{" "}
-                <Text style={{ textDecorationLine: "underline", fontSize: 14 }} onPress={() => router.push("/about")}>
-                  الشروط والأحكام
-                </Text>
-              </Text>
-            </Pressable>
+            {/* checkbox and its label toggle; the terms link is a separate button (no tap target inside another) */}
+            <View style={styles.agree}>
+              <Pressable
+                style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+                onPress={() => setAgree((a) => !a)}
+                hitSlop={10}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: agree }}
+                testID="agree-terms"
+              >
+                <View style={[styles.agreeBox, agree && { backgroundColor: COLORS.accent, borderColor: COLORS.accent }]}>
+                  {agree ? <Icon name="check" size={13} color="#fff" /> : null}
+                </View>
+                <Text style={{ fontSize: 14 }}>أوافق على</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push("/about")} hitSlop={8} testID="terms-link">
+                <Text style={{ textDecorationLine: "underline", fontSize: 14 }}>الشروط والأحكام</Text>
+              </Pressable>
+            </View>
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <Button label="تأكيد الطلب" onPress={submit} loading={loading} testID="place-order" />
           </>
@@ -265,7 +273,7 @@ const styles = StyleSheet.create({
   totals: { marginTop: 4 },
   sumRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: "#eeeeee" },
   sumLabel: { color: "#9b9b9b" },
-  agree: { flexDirection: "row", alignItems: "center", gap: 12 },
+  agree: { flexDirection: "row", alignItems: "center", gap: 5 },
   agreeBox: { width: 20, height: 20, borderRadius: 3, borderWidth: 1.5, borderColor: "#c4c4c4", alignItems: "center", justifyContent: "center" },
   error: { color: COLORS.danger, textAlign: "center" },
 })
