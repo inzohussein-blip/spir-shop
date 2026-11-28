@@ -73,7 +73,7 @@ export function HeroCarousel({ props }: BlockProps) {
           <Pressable
             key={i}
             onPress={() => openLink(router, s.link)}
-            style={[styles.slide, { width: width || 1, backgroundColor: s.background_color || COLORS.soft }]}
+            style={[styles.slide, { width: width || 1, backgroundColor: s.background_color || COLORS.soft }, s.image_url && !s.title ? { height: Math.round((width || 1) / 2) } : null]}
             testID={`slide-${i}`}
           >
             {s.image_url ? <Image source={s.image_url} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
@@ -145,28 +145,46 @@ export function FlashSale({ props }: BlockProps) {
   const left = sale.ends_at ? new Date(sale.ends_at).getTime() - now : null
   if (left !== null && left <= 0) return null
 
+  const h = left !== null ? Math.floor(left / 3600000) : 0
+  const parts = left !== null ? [h, Math.floor((left % 3600000) / 60000), Math.floor((left % 60000) / 1000)] : []
   return (
-    <View style={{ gap: 10 }}>
+    <View style={styles.saleBox}>
       <View style={styles.saleHead}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Text style={styles.saleTitle}>{str(props.title) || sale.title}</Text>
-          {left !== null ? (
-            <View style={styles.timer} testID="sale-countdown">
-              <Text style={styles.timerText}>
-                {`${pad(Math.floor(left / 3600000))}:${pad(Math.floor((left % 3600000) / 60000))}:${pad(Math.floor((left % 60000) / 1000))}`}
-              </Text>
-            </View>
-          ) : null}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 }}>
+          <Icon name="zap" size={18} color={COLORS.sale} />
+          <Text style={styles.saleTitle} numberOfLines={1}>{str(props.title) || sale.title}</Text>
         </View>
-        <Pressable onPress={() => router.push({ pathname: "/category/[id]", params: { id: "all", sale: "1" } })}>
-          <Text style={styles.more}>عرض الكل</Text>
+        <Pressable onPress={() => router.push({ pathname: "/category/[id]", params: { id: "all", sale: "1" } })} hitSlop={8}>
+          <Text style={styles.more}>عرض الكل ‹</Text>
         </Pressable>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 2 }}>
-        {products.map((p) => (
-          <View key={p.id} style={{ width: 156 }}>
-            <ProductCard product={p} />
+      {left !== null ? (
+        <View style={styles.timerRow} testID="sale-countdown">
+          <Text style={styles.endsIn}>ينتهي خلال</Text>
+          {h >= 24 ? (
+            <>
+              <View style={styles.timeBox}>
+                <Text style={styles.timeText}>{Math.floor(h / 24)}</Text>
+              </View>
+              <Text style={styles.endsIn}>يوم</Text>
+            </>
+          ) : null}
+          {/* hours:minutes:seconds always read left to right */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 3, direction: "ltr" }}>
+          {[h % 24, parts[1], parts[2]].map((n, i) => (
+            <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+              {i ? <Text style={styles.colon}>:</Text> : null}
+              <View style={styles.timeBox}>
+                <Text style={styles.timeText}>{pad(n)}</Text>
+              </View>
+            </View>
+          ))}
           </View>
+        </View>
+      ) : null}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 10 }} style={{ marginHorizontal: -10 }}>
+        {products.map((p) => (
+          <ProductCard key={p.id} product={p} variant="mini" />
         ))}
       </ScrollView>
     </View>
@@ -206,8 +224,14 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   trustText: { fontSize: 11, fontWeight: "700", flex: 1 },
-  saleHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 4 },
-  saleTitle: { fontSize: 20, fontWeight: "700" },
+  saleBox: { backgroundColor: COLORS.saleSoft, borderRadius: 12, padding: 12, gap: 10 },
+  saleHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  saleTitle: { fontSize: 17, fontWeight: "700" },
+  timerRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  endsIn: { fontSize: 12, color: COLORS.text, marginEnd: 2 },
+  timeBox: { backgroundColor: COLORS.dark, borderRadius: 4, minWidth: 24, paddingHorizontal: 4, paddingVertical: 2, alignItems: "center" },
+  timeText: { color: COLORS.onDark, fontWeight: "700", fontSize: 12, fontVariant: ["tabular-nums"] },
+  colon: { fontWeight: "700", color: COLORS.dark },
   timer: { backgroundColor: COLORS.danger, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
   timerText: { color: "#fff", fontWeight: "700", fontSize: 13, fontVariant: ["tabular-nums"] },
   more: { color: COLORS.muted, fontSize: 13 },

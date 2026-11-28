@@ -6,6 +6,7 @@ import {
   createPriceListsWorkflow,
   createProductsWorkflow,
   updatePriceListsWorkflow,
+  updateProductCategoriesWorkflow,
   updateProductsWorkflow,
   updateStoresWorkflow,
   uploadFilesWorkflow,
@@ -52,6 +53,14 @@ const EXISTING_DEALS: Record<string, number> = {
   "nivea-creme": 0.1,
   "ordinary-niacinamide": 0.2,
   "loreal-micellar-water": 0.25,
+}
+/** Photo shown for each top category (category circles, Discover cards). */
+const CATEGORY_PHOTOS: Record<string, string> = {
+  "العناية بالبشرة": "ordinary-niacinamide",
+  "المكياج": "nyx-eyeshadow-palette",
+  "العناية بالجسم": "coffee-body-scrub",
+  "العطور": "rose-eau-de-parfum",
+  "العناية بالشعر": "keratin-hair-mask",
 }
 const SALE_TITLE = "عروض الأسبوع"
 const HOME_LAYOUT_VERSION = "shop-v1"
@@ -143,6 +152,22 @@ export default async function seedDemoCatalog({ container }: ExecArgs) {
       },
     })
     logger.info(`Demo products created: ${toCreate.length}`)
+  }
+
+  /* ------------------------------- category photos ------------------------------- */
+  const { data: tops } = await query.graph({ entity: "product_category", fields: ["id", "name", "metadata", "parent_category_id"], filters: { name: Object.keys(CATEGORY_PHOTOS) } })
+  const staleCats = tops.filter((c) => {
+    const url = (c.metadata as Record<string, unknown> | null)?.image_url
+    return !c.parent_category_id && (!url || (typeof url === "string" && OLD_DEMO_PHOTOS.some((n) => url.endsWith(n))))
+  })
+  if (staleCats.length) {
+    await upload(staleCats.map((c) => `${CATEGORY_PHOTOS[c.name]}-1.jpg`))
+    for (const c of staleCats) {
+      await updateProductCategoriesWorkflow(container).run({
+        input: { selector: { id: c.id }, update: { metadata: { ...((c.metadata as Record<string, unknown>) ?? {}), image_url: uploaded.get(`${CATEGORY_PHOTOS[c.name]}-1.jpg`) } } },
+      })
+    }
+    logger.info(`Demo photos v2 on ${staleCats.length} categories`)
   }
 
   /* ------------------------------------ sale ------------------------------------- */

@@ -17,6 +17,7 @@ export const APP_BLOCK_TYPES = [
   "brand_strip",
   "product_carousel",
   "product_grid",
+  "product_feed",
   "countdown_offer",
   "video_banner",
   "collection_banner",

@@ -5,10 +5,11 @@ import Button from "../../components/Button"
 import Header from "../../components/Header"
 import SearchBar from "../../components/SearchBar"
 import Text from "../../components/Text"
-import { COLORS, IS_NATURAL, TAB_SPACE } from "../../lib/config"
+import { COLORS, TAB_SPACE } from "../../lib/config"
 import { useLayout } from "../../lib/layout"
 import { useStore } from "../../lib/store"
 import BlockRenderer from "../../sdui/Renderer"
+import { nearEndHandler } from "../../lib/feed"
 
 /**
  * Home (design: "homepage"): ☰ · store name · bell, then the sections published
@@ -30,20 +31,20 @@ export default function Home() {
     <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
       <Header variant="menu" title={tenant?.branding.app_name ?? "Spir Shop"} />
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 40 + TAB_SPACE }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 40 + TAB_SPACE }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        onScroll={nearEndHandler}
+        scrollEventThrottle={250}
       >
-        {IS_NATURAL ? (
-          // natural theme: search right under the header, like the design
-          <View style={{ marginBottom: 18 }}>
-            <SearchBar
-              placeholder="شنو تدورين عليه؟"
-              testID="home-search"
-              onPress={() => router.push("/find")}
-              onFilter={() => router.push({ pathname: "/category/[id]", params: { id: "all", filter: "1" } })}
-            />
-          </View>
-        ) : null}
+        {/* search first, like a shop app */}
+        <View style={{ marginBottom: 14 }}>
+          <SearchBar
+            placeholder="شنو تدورين عليه؟"
+            testID="home-search"
+            onPress={() => router.push("/find")}
+            onFilter={() => router.push({ pathname: "/category/[id]", params: { id: "all", filter: "1" } })}
+          />
+        </View>
         {preview ? (
           <View style={styles.previewBadge}>
             <Text style={{ color: "#fff", fontSize: 12, textAlign: "center" }}>معاينة المسودة</Text>

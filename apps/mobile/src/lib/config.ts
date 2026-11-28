@@ -75,6 +75,9 @@ const PALETTES = {
     /** links like "View all" */
     link: "#9b9b9b",
     danger: "#d64545",
+    /** sale prices, discount badges, countdowns */
+    sale: "#fa6338",
+    saleSoft: "#fff1ec",
   },
   natural: {
     bg: "#f6f6f3",
@@ -96,6 +99,8 @@ const PALETTES = {
     accent: "#7fa52a",
     link: "#7fa52a",
     danger: "#d64545",
+    sale: "#fa6338",
+    saleSoft: "#fff1ec",
   },
 }
 

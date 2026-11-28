@@ -130,19 +130,32 @@ export function CategoryChips({ props }: BlockProps) {
       </View>
     )
   }
+  // round photo per category (from the category's image), icon when it has none
   return (
     <View style={{ gap: 12 }}>
       <SectionTitle title={str(props.title)} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 2, paddingHorizontal: 18 }}>
-        {cats.map((c, i) => (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 6, paddingHorizontal: 16 }}>
+        <Link href="/category/all?sale=1" asChild>
+          <Pressable style={styles.cat} testID="category-sale">
+            <View style={[styles.catPhoto, { backgroundColor: COLORS.sale }]}>
+              <Text style={styles.saleChip}>%</Text>
+            </View>
+            <Text style={[styles.catText, { color: COLORS.sale, fontWeight: "700" }]} numberOfLines={1}>
+              العروض
+            </Text>
+          </Pressable>
+        </Link>
+        {cats.map((c) => (
           <Link key={c.id} href={`/category/${c.id}`} asChild>
             <Pressable style={styles.cat} testID={`category-${c.id}`}>
-              <View style={[styles.catRing, i === 0 && styles.catRingActive]}>
-                <View style={[styles.catCircle, i === 0 && styles.catCircleActive]}>
-                  <CategoryIcon name={c.name} size={21} color={i === 0 ? COLORS.onStrong : "#8a8a8f"} />
-                </View>
+              <View style={styles.catPhoto}>
+                {c.metadata?.image_url ? (
+                  <Image source={c.metadata.image_url} style={StyleSheet.absoluteFill} contentFit="cover" />
+                ) : (
+                  <CategoryIcon name={c.name} size={24} color="#8a8a8f" />
+                )}
               </View>
-              <Text style={[styles.catText, i === 0 && { color: COLORS.primaryDark }]} numberOfLines={1}>
+              <Text style={styles.catText} numberOfLines={1}>
                 {c.name}
               </Text>
             </Pressable>
@@ -157,7 +170,9 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   title: { fontSize: IS_NATURAL ? 17 : 20, fontWeight: "700", color: COLORS.primaryDark },
   more: { color: COLORS.link, fontSize: 13, fontWeight: IS_NATURAL ? "700" : "400" },
-  cat: { alignItems: "center", width: 68, gap: 8 },
+  cat: { alignItems: "center", width: 72, gap: 7 },
+  catPhoto: { width: 62, height: 62, borderRadius: 31, backgroundColor: COLORS.soft, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  saleChip: { color: "#fff", fontSize: 24, fontWeight: "700" },
   catRing: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   catRingActive: { borderWidth: 1.5, borderColor: COLORS.strong },
   catCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: IS_NATURAL ? COLORS.card : COLORS.soft, alignItems: "center", justifyContent: "center" },
@@ -165,5 +180,5 @@ const styles = StyleSheet.create({
   catCard: { flexDirection: "row", alignItems: "center", gap: 10, height: 50, borderRadius: 14, backgroundColor: COLORS.card, paddingStart: 14, paddingEnd: 6 },
   catCardText: { fontSize: 13, fontWeight: "700" },
   catCardImg: { width: 38, height: 40, borderRadius: 10 },
-  catText: { fontSize: 11, color: "#9b9b9b", textAlign: "center" },
+  catText: { fontSize: 11, color: COLORS.text, textAlign: "center" },
 })

@@ -7,7 +7,6 @@ import { COLORS, IS_NATURAL, SHADOW } from "../lib/config"
 import { formatIqd } from "../lib/format"
 import { saleInfo, useStore } from "../lib/store"
 import { CategoryIcon, HeartIcon } from "./Icon"
-import Stars from "./Stars"
 import Text from "./Text"
 
 export function lowestPrice(p: Product) {
@@ -27,13 +26,25 @@ function Thumb({ product, style, iconSize = 40 }: { product: Product; style: obj
   )
 }
 
+/** "-20%" corner badge on sale products. */
+function SaleBadge({ product, small }: { product: Product; small?: boolean }) {
+  const sale = saleInfo(product)
+  if (!sale || sale.percent < 1) return null
+  return (
+    <View style={[styles.badge, small && styles.badgeSmall]}>
+      <Text style={[styles.badgeText, small && { fontSize: 10 }]}>{`\u200E-${sale.percent}%`}</Text>
+    </View>
+  )
+}
+
+/** Price in the sale colour when discounted, with the old price struck through. */
 function PriceLine({ product, size = 15 }: { product: Product; size?: number }) {
   const price = lowestPrice(product)
   const sale = saleInfo(product)
   if (price == null) return null
   return (
     <View style={styles.priceRow}>
-      <Text style={[styles.price, { fontSize: size }]} numberOfLines={1}>
+      <Text style={[styles.price, { fontSize: size }, sale && { color: COLORS.sale }]} numberOfLines={1}>
         {formatIqd(sale?.price ?? price)}
       </Text>
       {sale ? (
@@ -45,16 +56,52 @@ function PriceLine({ product, size = 15 }: { product: Product; size?: number }) 
   )
 }
 
+/** Small "★ 4.6 (12)" line. */
+function RatingLine({ productId }: { productId: string }) {
+  const { ratings, features } = useStore()
+  const r = ratings[productId]
+  if (!features.reviews || !r?.count) return null
+  return (
+    <View style={styles.ratingRow}>
+      <Text style={styles.star}>★</Text>
+      <Text style={styles.ratingText}>
+        {r.average.toFixed(1)} <Text style={{ color: COLORS.muted, fontSize: 11 }}>({r.count})</Text>
+      </Text>
+    </View>
+  )
+}
+
+function Heart({ product, style }: { product: Product; style: object }) {
+  const { isWished, toggleWish, features } = useStore()
+  if (!features.wishlist) return null
+  return (
+    <Pressable
+      style={style}
+      onPress={(e) => {
+        e.preventDefault?.()
+        toggleWish(product.id)
+      }}
+      hitSlop={8}
+      accessibilityLabel="المفضلة"
+      testID={`wish-${product.handle}`}
+    >
+      <HeartIcon filled={isWished(product.id)} size={15} color={isWished(product.id) ? COLORS.sale : COLORS.primaryDark} />
+    </Pressable>
+  )
+}
+
 /**
- * Product tiles from the design:
- *  - "grid" (results, wishlist): image with heart, name, price (+ old price), stars
- *  - "featured" (home sliders): tall image, name, price
- *  - "compact" (home "recommended"): small image beside name and price
+ * Product tiles:
+ *  - "grid" (home feed, results, wishlist): tall 3:4 photo with discount badge
+ *    and heart, two-line name, price (sale colour + old price), rating
+ *  - "featured" (home sliders): narrower version of the grid tile
+ *  - "mini" (deals strip): small photo and price only
+ *  - "compact": small photo beside name and price
  */
-export default function ProductCard({ product, variant = "grid" }: { product: Product; variant?: "grid" | "featured" | "compact" }) {
-  const { isWished, toggleWish, ratings, requestRatings, features } = useStore()
+export default function ProductCard({ product, variant = "grid" }: { product: Product; variant?: "grid" | "featured" | "compact" | "mini" }) {
+  const { requestRatings } = useStore()
   useEffect(() => {
-    if (variant === "grid") requestRatings([product.id])
+    if (variant === "grid" || variant === "featured") requestRatings([product.id])
   }, [product.id, requestRatings, variant])
 
   if (variant === "compact") {
@@ -73,80 +120,44 @@ export default function ProductCard({ product, variant = "grid" }: { product: Pr
     )
   }
 
-  if (IS_NATURAL) {
-    // natural theme: white rounded card, photo on top, heart in the corner, name and price below
-    const rating = ratings[product.id]
+  if (variant === "mini") {
+    const sale = saleInfo(product)
     return (
       <Link href={`/product/${product.handle}`} asChild>
-        <Pressable style={variant === "featured" ? styles.nFeatured : styles.nCard} testID={`product-${product.handle}`}>
-          <Thumb product={product} style={styles.nImg} />
-          {features.wishlist ? (
-          <Pressable
-            style={styles.nHeart}
-            onPress={(e) => {
-              e.preventDefault?.()
-              toggleWish(product.id)
-            }}
-            hitSlop={8}
-            accessibilityLabel="المفضلة"
-            testID={`wish-${product.handle}`}
-          >
-            <HeartIcon filled={isWished(product.id)} size={16} color={COLORS.primaryDark} />
-          </Pressable>
-          ) : null}
-          <View style={{ padding: 10, gap: 4 }}>
-            <Text style={styles.title} numberOfLines={1}>
-              {product.title}
-            </Text>
-            <PriceLine product={product} />
-            {features.reviews && variant === "grid" && rating?.count ? <Stars value={rating.average} count={rating.count} size={10} /> : null}
+        <Pressable style={styles.mini} testID={`product-${product.handle}`}>
+          <View>
+            <Thumb product={product} style={styles.miniImg} iconSize={26} />
+            <SaleBadge product={product} small />
           </View>
-        </Pressable>
-      </Link>
-    )
-  }
-
-  if (variant === "featured") {
-    return (
-      <Link href={`/product/${product.handle}`} asChild>
-        <Pressable style={styles.featured} testID={`product-${product.handle}`}>
-          <Thumb product={product} style={styles.featuredImg} />
-          <Text style={styles.title} numberOfLines={1}>
-            {product.title}
+          <Text style={[styles.miniPrice, sale && { color: COLORS.sale }]} numberOfLines={1}>
+            {formatIqd(sale?.price ?? lowestPrice(product))}
           </Text>
-          <PriceLine product={product} size={16} />
+          {sale ? (
+            <Text style={styles.old} numberOfLines={1}>
+              {formatIqd(sale.original)}
+            </Text>
+          ) : null}
         </Pressable>
       </Link>
     )
   }
 
-  const rating = ratings[product.id]
-  const wished = isWished(product.id)
+  const featured = variant === "featured"
   return (
     <Link href={`/product/${product.handle}`} asChild>
-      <Pressable style={styles.card} testID={`product-${product.handle}`}>
+      <Pressable style={featured ? styles.featured : styles.card} testID={`product-${product.handle}`}>
         <View>
-          <Thumb product={product} style={styles.gridImg} />
-          {features.wishlist ? (
-          <Pressable
-            style={styles.heart}
-            onPress={(e) => {
-              e.preventDefault?.()
-              toggleWish(product.id)
-            }}
-            hitSlop={8}
-            accessibilityLabel="المفضلة"
-            testID={`wish-${product.handle}`}
-          >
-            <HeartIcon filled={wished} size={15} color="#d3d6da" solid />
-          </Pressable>
-          ) : null}
+          <Thumb product={product} style={styles.img} />
+          <SaleBadge product={product} />
+          <Heart product={product} style={styles.heart} />
         </View>
-        <Text style={styles.title} numberOfLines={1}>
-          {product.title}
-        </Text>
-        <PriceLine product={product} />
-        {features.reviews && rating?.count ? <Stars value={rating.average} count={rating.count} size={10} /> : null}
+        <View style={styles.info}>
+          <Text style={styles.title} numberOfLines={2}>
+            {product.title}
+          </Text>
+          <PriceLine product={product} size={featured ? 14 : 15} />
+          <RatingLine productId={product.id} />
+        </View>
       </Pressable>
     </Link>
   )
@@ -154,25 +165,43 @@ export default function ProductCard({ product, variant = "grid" }: { product: Pr
 
 const styles = StyleSheet.create({
   thumb: { backgroundColor: COLORS.soft, overflow: "hidden", alignItems: "center", justifyContent: "center" },
-  nCard: { flex: 1, margin: 6, maxWidth: "50%", backgroundColor: COLORS.card, borderRadius: 18, overflow: "hidden" },
-  nFeatured: { width: 150, backgroundColor: COLORS.card, borderRadius: 18, overflow: "hidden" },
-  nImg: { aspectRatio: 0.95, width: "100%" },
-  nHeart: { position: "absolute", top: 8, start: 8, width: 30, height: 30, borderRadius: 15, backgroundColor: COLORS.card, alignItems: "center", justifyContent: "center" },
-  card: { flex: 1, margin: 8, gap: 5, maxWidth: "50%" },
-  gridImg: { aspectRatio: 0.78, borderRadius: 10, marginBottom: 6 },
+  card: {
+    flex: 1,
+    margin: 4,
+    maxWidth: "50%",
+    backgroundColor: COLORS.card,
+    borderRadius: IS_NATURAL ? 16 : 6,
+    overflow: "hidden",
+    ...(IS_NATURAL ? {} : { borderWidth: StyleSheet.hairlineWidth, borderColor: "#ececec" }),
+  },
+  featured: { width: 132, backgroundColor: COLORS.card, borderRadius: IS_NATURAL ? 14 : 6, overflow: "hidden" },
+  img: { width: "100%", aspectRatio: 0.75 },
+  info: { paddingHorizontal: 8, paddingTop: 7, paddingBottom: 9, gap: 4 },
+  title: { fontSize: 12, lineHeight: 17, color: COLORS.text, minHeight: 34 },
+  badge: { position: "absolute", top: 0, start: 0, backgroundColor: COLORS.sale, paddingHorizontal: 7, paddingVertical: 3, borderBottomEndRadius: 8 },
+  badgeSmall: { paddingHorizontal: 5, paddingVertical: 2 },
+  badgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
   heart: {
     position: "absolute",
-    top: 8,
+    bottom: 8,
     end: 8,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "#fff",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(255,255,255,0.92)",
     alignItems: "center",
     justifyContent: "center",
+    ...SHADOW,
   },
-  featured: { width: 126, gap: 6 },
-  featuredImg: { width: 126, height: 172, borderRadius: 10, marginBottom: 4 },
+  priceRow: { flexDirection: "row", alignItems: "baseline", gap: 6, flexWrap: "wrap" },
+  price: { fontWeight: "700", color: COLORS.primaryDark },
+  old: { fontSize: 11, color: "#a8a8ad", textDecorationLine: "line-through" },
+  ratingRow: { flexDirection: "row", alignItems: "center", gap: 3 },
+  star: { color: "#f5a623", fontSize: 12 },
+  ratingText: { fontSize: 11, color: COLORS.text },
+  mini: { width: 104, gap: 3 },
+  miniImg: { width: 104, height: 138, borderRadius: 6 },
+  miniPrice: { fontSize: 13, fontWeight: "700", color: COLORS.primaryDark, marginTop: 3 },
   compact: {
     width: 212,
     flexDirection: "row",
@@ -189,8 +218,4 @@ const styles = StyleSheet.create({
   },
   compactImg: { width: 66, height: 66, borderRadius: 10 },
   compactTitle: { fontSize: 13, fontWeight: "500" },
-  title: { fontSize: 13, fontWeight: "500", color: COLORS.primaryDark },
-  priceRow: { flexDirection: "row", alignItems: "baseline", gap: 8 },
-  price: { fontWeight: "700", color: COLORS.primaryDark },
-  old: { fontSize: 11, color: "#b5b5b9", textDecorationLine: "line-through" },
 })

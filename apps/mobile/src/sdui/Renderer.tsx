@@ -8,6 +8,7 @@ import { StoryBar, VideoBanner } from "./blocks/media"
 import { BrandStrip } from "./blocks/brands"
 import { FlashSale, HeroCarousel, TrustStrip } from "./blocks/commerce"
 import { CollectionBanner, CollectionPair } from "./blocks/collections"
+import { ProductFeed } from "./blocks/feed"
 import type { BlockProps } from "./types"
 
 /**
@@ -25,6 +26,7 @@ const REGISTRY: Record<string, ComponentType<BlockProps>> = {
   brand_strip: BrandStrip,
   product_carousel: ProductCarousel,
   product_grid: ProductGrid,
+  product_feed: ProductFeed,
   countdown_offer: CountdownOffer,
   video_banner: VideoBanner,
   collection_banner: CollectionBanner,
@@ -51,7 +53,7 @@ export default function BlockRenderer({ blocks }: { blocks: Block[] }) {
   const { features } = useStore()
   blocks = blocks.filter((b) => !FEATURE_OF[b.type] || features[FEATURE_OF[b.type]])
   return (
-    <View style={{ gap: 28 }}>
+    <View style={{ gap: 22 }}>
       {blocks.map((block) => {
         const Comp = REGISTRY[block.type]
         if (!Comp) return null

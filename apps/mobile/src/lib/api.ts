@@ -146,7 +146,7 @@ const PRODUCT_FIELDS =
   "*variants.calculated_price,+variants.inventory_quantity,*variants.options,*categories,*images,+metadata,*collection"
 
 export async function listProducts(
-  params: { categoryId?: string; collectionId?: string; q?: string; limit?: number; ids?: string[] } = {}
+  params: { categoryId?: string; collectionId?: string; q?: string; limit?: number; offset?: number; ids?: string[]; order?: string } = {}
 ) {
   const region = await getRegionId()
   const qs = new URLSearchParams({
@@ -158,6 +158,8 @@ export async function listProducts(
   if (params.collectionId) qs.append("collection_id[]", params.collectionId)
   for (const id of params.ids ?? []) qs.append("id[]", id)
   if (params.q) qs.set("q", params.q)
+  if (params.offset) qs.set("offset", String(params.offset))
+  if (params.order) qs.set("order", params.order)
   return (await storeFetch<{ products: Product[] }>(`/products?${qs}`)).products
 }
 

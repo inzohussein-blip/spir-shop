@@ -227,7 +227,7 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
     root: { fields: {} },
     categories: {
       content: { title: "محتوى", components: ["hero_carousel", "hero_banner", "collection_banner", "collection_pair", "story_bar", "trust_strip", "countdown_offer", "video_banner"] },
-      products: { title: "منتجات", components: ["flash_sale", "product_carousel", "product_grid", "category_chips", "brand_strip"] },
+      products: { title: "منتجات", components: ["flash_sale", "product_carousel", "product_grid", "product_feed", "category_chips", "brand_strip"] },
       layout: { title: "تنسيق", components: ["heading", "spacer"] },
     },
     components: {
@@ -374,6 +374,18 @@ export function buildConfig(categories: Option[], collections: Option[]): Config
         fields: { title: { type: "text", label: "العنوان" }, ...sourceFields },
         defaultProps: { title: "كل المنتجات", source: "all", category_id: "", collection_id: "", limit: 6 },
         render: (p) => <ProductsPreview {...(p as Parameters<typeof ProductsPreview>[0])} grid />,
+      },
+      product_feed: {
+        label: "كل المنتجات (تمرير بلا نهاية)",
+        fields: { title: { type: "text", label: "العنوان" } },
+        defaultProps: { title: "مقترحة لكِ" },
+        render: (p) => (
+          <div style={box}>
+            <div style={{ textAlign: "center", fontWeight: 700, marginBottom: 8 }}>{(p.title as string) || "مقترحة لكِ"}</div>
+            <ProductsPreview {...({ title: "", source: "all", limit: 4 } as Parameters<typeof ProductsPreview>[0])} grid />
+            <div style={{ textAlign: "center", fontSize: 12, color: C.muted, marginTop: 6 }}>كل منتجات المتجر بعمودين، وتنزل أكثر كلما نزل الزبون. خليه آخر قسم بالصفحة.</div>
+          </div>
+        ),
       },
       brand_strip: {
         label: "العلامات التجارية",
